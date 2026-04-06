@@ -1,0 +1,1037 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium JavaFX Blackjack Simulator - Algorithm Design & Strategy Engine Documentation</title>
+    <style>
+        @page { size: A4; margin: 14mm; }
+        :root {
+            --bg-card: rgba(13, 30, 23, 0.94);
+            --bg-card-soft: rgba(16, 38, 28, 0.92);
+            --ink: #f5f7f3;
+            --muted: #b9cabe;
+            --accent: #e8c56e;
+            --accent-soft: #f4dfaa;
+            --line: rgba(232, 197, 110, 0.22);
+            --shadow: rgba(0, 0, 0, 0.28);
+            --mono: "Consolas", "SFMono-Regular", "Liberation Mono", monospace;
+            --sans: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+        }
+        * { box-sizing: border-box; }
+        html, body {
+            margin: 0;
+            padding: 0;
+            background:
+                radial-gradient(circle at top, rgba(232, 197, 110, 0.10), transparent 24%),
+                linear-gradient(180deg, #08150f 0%, #0a1b14 48%, #07120d 100%);
+            color: var(--ink);
+            font-family: var(--sans);
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        .document { width: 100%; }
+        .page {
+            position: relative;
+            min-height: calc(297mm - 28mm);
+            padding: 18mm 18mm 16mm;
+            background:
+                radial-gradient(circle at 50% 10%, rgba(245, 226, 158, 0.08), transparent 20%),
+                linear-gradient(180deg, rgba(11, 23, 17, 0.98), rgba(7, 17, 12, 0.98));
+            border: 1px solid rgba(232, 197, 110, 0.10);
+            overflow: hidden;
+        }
+        .page + .page { page-break-before: always; }
+        .page::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(circle at 50% 16%, rgba(232, 197, 110, 0.06), transparent 26%),
+                radial-gradient(circle at 90% 10%, rgba(78, 168, 114, 0.10), transparent 18%),
+                linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.06) 100%);
+            pointer-events: none;
+        }
+        .page > * { position: relative; z-index: 1; }
+        .eyebrow {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: rgba(232, 197, 110, 0.10);
+            border: 1px solid rgba(232, 197, 110, 0.22);
+            color: var(--accent-soft);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+        }
+        h1, h2, h3, h4 { margin: 0 0 10px; line-height: 1.2; }
+        h1 { font-size: 34px; font-weight: 800; letter-spacing: -0.02em; }
+        h2 { font-size: 26px; color: var(--accent-soft); }
+        h3 { font-size: 18px; color: var(--accent-soft); margin-top: 20px; }
+        h4 { font-size: 14px; color: #eff6ef; letter-spacing: 0.03em; text-transform: uppercase; }
+        p, li { color: var(--muted); font-size: 13px; line-height: 1.65; margin: 0 0 10px; word-break: keep-all; }
+        ul, ol { margin: 0 0 10px 20px; padding: 0; }
+        .lead { font-size: 15px; color: #dce6de; }
+        .hero { display: grid; grid-template-columns: 1.45fr 0.95fr; gap: 18px; min-height: 228mm; align-items: end; }
+        .hero-card, .panel, .callout, .stat, .formula, .mini-card, .table-card {
+            background: var(--bg-card);
+            border: 1px solid var(--line);
+            border-radius: 20px;
+            box-shadow: 0 18px 34px var(--shadow);
+        }
+        .hero-card { padding: 28px; }
+        .hero-badges { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+        .badge {
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            color: #eef5ef;
+            font-size: 11.5px;
+            font-weight: 700;
+        }
+        .section { display: grid; gap: 16px; }
+        .section-header { display: flex; align-items: end; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+        .section-number { font-size: 13px; color: var(--accent); font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; }
+        .two-col { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 16px; }
+        .two-col.equal { grid-template-columns: 1fr 1fr; }
+        .three-col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+        .panel { padding: 18px 18px 16px; }
+        .panel p:last-child, .panel ul:last-child, .panel ol:last-child { margin-bottom: 0; }
+        .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+        .stat { padding: 14px 14px 12px; }
+        .stat-label { font-size: 11px; color: #cfdbc7; text-transform: uppercase; letter-spacing: 0.14em; margin-bottom: 10px; }
+        .stat-value { font-size: 22px; font-weight: 800; color: #fff8e8; line-height: 1.18; }
+        .stat-note { font-size: 11.5px; color: #aebcaf; margin-top: 6px; }
+        .callout { padding: 16px 18px; background: linear-gradient(180deg, rgba(18, 41, 30, 0.98), rgba(12, 27, 21, 0.98)); }
+        .callout strong { color: #fff5d6; }
+        .formula { padding: 14px 16px; background: linear-gradient(180deg, rgba(12, 29, 22, 0.98), rgba(9, 21, 16, 0.98)); }
+        .formula code, pre, .mono { font-family: var(--mono); }
+        pre {
+            margin: 0;
+            padding: 14px 16px;
+            background: rgba(4, 10, 8, 0.92);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            color: #eef5ef;
+            font-size: 12px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        .table-card { overflow: hidden; }
+        thead th {
+            background: rgba(232, 197, 110, 0.10);
+            color: #fff2c5;
+            font-size: 12px;
+            font-weight: 800;
+            text-align: left;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+        }
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+            vertical-align: top;
+            font-size: 12.4px;
+            line-height: 1.55;
+        }
+        td { color: var(--muted); }
+        tbody tr:last-child td { border-bottom: 0; }
+        .svg-card { padding: 8px; overflow: hidden; }
+        svg { width: 100%; height: auto; display: block; }
+        .list-tight li { margin-bottom: 6px; }
+        .grid-note { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .mini-card { padding: 12px 14px; background: var(--bg-card-soft); }
+        .mini-card .title { font-size: 12px; font-weight: 800; color: #fff3cb; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .small { font-size: 11.5px; }
+        .accent { color: var(--accent-soft); }
+        .footer-note { margin-top: 14px; font-size: 11.5px; color: #98ab9d; }
+        .page-index {
+            position: absolute;
+            bottom: 10mm;
+            right: 18mm;
+            color: rgba(255, 255, 255, 0.42);
+            font-size: 10px;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+        }
+        .signature { margin-top: 26px; font-size: 12px; color: #cedbce; }
+    </style>
+</head>
+<body>
+    <div class="document">
+        <section class="page">
+            <div class="hero">
+                <div class="hero-card">
+                    <div class="eyebrow">Algorithm Design &amp; Strategy Engine Documentation</div>
+                    <h1 style="margin-top: 18px;">Premium JavaFX Blackjack Simulator</h1>
+                    <h2>Portfolio-Grade Engineering Whitepaper</h2>
+                    <p class="lead" style="margin-top: 18px;">
+                        A full-stack Java desktop blackjack engine built with a reusable rules core,
+                        a JavaFX presentation layer, rule-based strategy analysis, animated table UX,
+                        persistent sessions, and recommendation analytics.
+                    </p>
+                    <div class="hero-badges">
+                        <span class="badge">Java + JavaFX + FXML + CSS</span>
+                        <span class="badge">Single-player vs Dealer</span>
+                        <span class="badge">Strategy Analysis</span>
+                        <span class="badge">Session Persistence</span>
+                        <span class="badge">Recommendation Accuracy</span>
+                    </div>
+                    <div class="signature">
+                        <div><strong>Author:</strong> Hyeonjo Kim</div>
+                        <div><strong>Document Type:</strong> Software Engineering Design Document / Technical Whitepaper</div>
+                    </div>
+                </div>
+                <div class="section" style="align-self: stretch;">
+                    <div class="panel">
+                        <h3 style="margin-top: 0;">Document Scope</h3>
+                        <ul class="list-tight">
+                            <li>Core object model and engine responsibilities</li>
+                            <li>Round lifecycle and branching algorithms</li>
+                            <li>Rule-based strategy recommendation system</li>
+                            <li>Expected value, bust risk, and dealer bust chance heuristics</li>
+                            <li>JavaFX synchronization, animation, and state management</li>
+                            <li>Performance, persistence, and roadmap decisions</li>
+                        </ul>
+                    </div>
+                    <div class="panel svg-card">
+                        <svg viewBox="0 0 520 360" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <linearGradient id="feltKo" x1="0" x2="0" y1="0" y2="1">
+                                    <stop offset="0%" stop-color="#19553d"/>
+                                    <stop offset="100%" stop-color="#0b2f21"/>
+                                </linearGradient>
+                                <linearGradient id="cardFrontKo" x1="0" x2="0" y1="0" y2="1">
+                                    <stop offset="0%" stop-color="#fbfaf4"/>
+                                    <stop offset="100%" stop-color="#ece6d7"/>
+                                </linearGradient>
+                            </defs>
+                            <rect x="18" y="18" width="484" height="324" rx="36" fill="url(#feltKo)" stroke="rgba(232,197,110,0.45)"/>
+                            <ellipse cx="260" cy="70" rx="120" ry="26" fill="rgba(255,255,255,0.07)"/>
+                            <text x="260" y="78" text-anchor="middle" fill="#f6eec9" font-size="24" font-weight="700">Dealer Zone</text>
+                            <circle cx="260" cy="182" r="60" fill="rgba(8,34,23,0.88)" stroke="#e8c56e" stroke-width="3"/>
+                            <text x="260" y="173" text-anchor="middle" fill="#f4e9c1" font-size="18" font-weight="700">Bet</text>
+                            <text x="260" y="197" text-anchor="middle" fill="#fff8de" font-size="24" font-weight="800">25</text>
+                            <ellipse cx="260" cy="294" rx="132" ry="26" fill="rgba(255,255,255,0.07)"/>
+                            <text x="260" y="301" text-anchor="middle" fill="#f6eec9" font-size="24" font-weight="700">Player Zone</text>
+                            <g transform="translate(152 96) rotate(-3)">
+                                <rect width="78" height="108" rx="10" fill="url(#cardFrontKo)" stroke="#1a201d" stroke-width="2"/>
+                                <text x="18" y="26" fill="#1d2521" font-size="18" font-weight="700">10</text>
+                                <text x="33" y="58" fill="#c23636" font-size="26">♥</text>
+                            </g>
+                            <g transform="translate(238 94) rotate(2)">
+                                <rect width="78" height="108" rx="10" fill="#143b77" stroke="#f4e5b2" stroke-width="2"/>
+                                <rect x="10" y="10" width="58" height="88" rx="7" fill="none" stroke="#f4e5b2" stroke-dasharray="4 3"/>
+                            </g>
+                            <g transform="translate(182 230) rotate(-4)">
+                                <rect width="78" height="108" rx="10" fill="url(#cardFrontKo)" stroke="#1a201d" stroke-width="2"/>
+                                <text x="18" y="26" fill="#1d2521" font-size="18" font-weight="700">A</text>
+                                <text x="33" y="58" fill="#1d2521" font-size="26">♠</text>
+                            </g>
+                            <g transform="translate(270 228) rotate(3)">
+                                <rect width="78" height="108" rx="10" fill="url(#cardFrontKo)" stroke="#1a201d" stroke-width="2"/>
+                                <text x="18" y="26" fill="#1d2521" font-size="18" font-weight="700">7</text>
+                                <text x="33" y="58" fill="#c23636" font-size="26">♦</text>
+                            </g>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            <div class="page-index">01 / 08</div>
+        </section>
+
+        <section class="page">
+            <div class="section-header">
+                <div>
+                    <div class="section-number">02. Project Overview</div>
+                    <h2>Why This Engine Exists</h2>
+                </div>
+            </div>
+            <div class="two-col">
+                <div class="panel">
+                    <p>
+                        This blackjack engine solves a common gap in game demos: most portfolio blackjack
+                        projects either stop at simple console play or bury the rules inside UI code.
+                        This project instead separates the core game engine, statistical analytics,
+                        strategy recommendation logic, and JavaFX presentation into distinct layers.
+                    </p>
+                    <p>
+                        The result is not just a playable casino-style desktop app. It is an explainable
+                        algorithmic system that can answer <span class="accent">what move is recommended</span>,
+                        <span class="accent">why it is recommended</span>, and <span class="accent">how risky the current state is</span>
+                        while preserving a reusable engine that can later power tests, bots, Monte Carlo analysis,
+                        or a different UI front-end.
+                    </p>
+                    <h3>Why Strategy Analysis Matters</h3>
+                    <ul class="list-tight">
+                        <li><strong>Best Move</strong>converts basic-strategy rules into explainable decisions for the current hand.</li>
+                        <li><strong>Expected EV</strong>provides a normalized heuristic estimate of long-term hand quality.</li>
+                        <li><strong>Bust Risk</strong>quantifies immediate risk when drawing one additional card.</li>
+                        <li><strong>Dealer Bust Chance</strong>exposes the pressure created by a weak dealer up-card.</li>
+                        <li><strong>Recommendation Analytics</strong>measures whether following advice correlates with better outcomes across the session.</li>
+                    </ul>
+                </div>
+                <div class="section">
+                    <div class="metrics">
+                        <div class="stat">
+                            <div class="stat-label">Game Actions</div>
+                            <div class="stat-value">Hit<br>Stand<br>Double<br>Split</div>
+                            <div class="stat-note">Single-split support with multi-hand resolution.</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-label">Engine Shape</div>
+                            <div class="stat-value">OOP<br>Stateful<br>UI-agnostic</div>
+                            <div class="stat-note">Domain objects are isolated from rendering concerns.</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-label">Analytics</div>
+                            <div class="stat-value">Session<br>Round<br>Advice</div>
+                            <div class="stat-note">Tracks outcome quality and recommendation adherence.</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-label">Persistence</div>
+                            <div class="stat-value">Save<br>Load<br>Export</div>
+                            <div class="stat-note">Snapshots restore bankroll, theme, and aggregate metrics.</div>
+                        </div>
+                    </div>
+                    <div class="callout">
+                        <strong>Key technical strengths.</strong>
+                        The project is strongest where portfolio apps usually stop:
+                        algorithm explainability, explicit payout accounting, multi-hand split state,
+                        live UI-state synchronization, and a premium JavaFX front-end with reusable animation helpers.
+                    </div>
+                    <div class="panel">
+                        <h3 style="margin-top: 0;">Engineering Assumptions</h3>
+                        <ul class="list-tight">
+                            <li>A fresh 52-card deck is rebuilt and shuffled at the beginning of every round.</li>
+                            <li>The dealer stands on all 17 values, including soft 17, because the draw rule is <span class="mono">value &lt; 17</span>.</li>
+                            <li>Natural blackjack is detected immediately after the opening deal.</li>
+                            <li>Natural blackjack currently pays even money in the engine: payout <span class="mono">= 2 × bet</span>, not 3:2.</li>
+                            <li>The current implementation allows one split per round, which simplifies multi-hand sequencing and UI management.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="page-index">02 / 08</div>
+        </section>
+
+        <section class="page">
+            <div class="section-header">
+                <div>
+                    <div class="section-number">03. Core OOP Architecture</div>
+                    <h2>Class Responsibilities And Layering</h2>
+                </div>
+            </div>
+            <div class="panel svg-card">
+                <svg viewBox="0 0 1200 560" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <marker id="arrowKo" markerWidth="12" markerHeight="12" refX="9" refY="6" orient="auto">
+                            <path d="M0,0 L12,6 L0,12 z" fill="#e8c56e"/>
+                        </marker>
+                    </defs>
+                    <rect x="18" y="18" width="1164" height="524" rx="28" fill="rgba(7,17,12,0.35)" stroke="rgba(232,197,110,0.20)"/>
+                    <text x="80" y="62" fill="#f7edc8" font-size="22" font-weight="800">Presentation Layer</text>
+                    <text x="80" y="206" fill="#f7edc8" font-size="22" font-weight="800">Application / Engine Layer</text>
+                    <text x="80" y="406" fill="#f7edc8" font-size="22" font-weight="800">Domain Model Layer</text>
+                    <g fill="rgba(18,42,31,0.94)" stroke="rgba(232,197,110,0.25)">
+                        <rect x="80" y="84" width="210" height="84" rx="16"/>
+                        <rect x="320" y="84" width="240" height="84" rx="16"/>
+                        <rect x="590" y="84" width="220" height="84" rx="16"/>
+                        <rect x="80" y="228" width="230" height="98" rx="16"/>
+                        <rect x="342" y="228" width="230" height="98" rx="16"/>
+                        <rect x="604" y="228" width="230" height="98" rx="16"/>
+                        <rect x="866" y="228" width="230" height="98" rx="16"/>
+                        <rect x="80" y="430" width="120" height="82" rx="16"/>
+                        <rect x="220" y="430" width="120" height="82" rx="16"/>
+                        <rect x="360" y="430" width="120" height="82" rx="16"/>
+                        <rect x="500" y="430" width="120" height="82" rx="16"/>
+                        <rect x="640" y="430" width="120" height="82" rx="16"/>
+                        <rect x="780" y="430" width="120" height="82" rx="16"/>
+                        <rect x="920" y="430" width="220" height="82" rx="16"/>
+                    </g>
+                    <g fill="#ffffff" font-size="16" font-weight="700">
+                        <text x="102" y="116">BlackjackApplication</text>
+                        <text x="102" y="140" fill="#c9d7cd" font-size="13" font-weight="500">Scene shell, theme, navigation</text>
+                        <text x="342" y="116">BlackjackController</text>
+                        <text x="342" y="140" fill="#c9d7cd" font-size="13" font-weight="500">FXML bindings, animations, UI sync</text>
+                        <text x="614" y="116">CardImageMapper</text>
+                        <text x="614" y="140" fill="#c9d7cd" font-size="13" font-weight="500">PNG mapping, caching, safe fallback</text>
+                        <text x="102" y="262">GameEngine</text>
+                        <text x="102" y="286" fill="#c9d7cd" font-size="13" font-weight="500">Round state, branching, payout, dealer logic</text>
+                        <text x="364" y="262">StrategyAdvisor</text>
+                        <text x="364" y="286" fill="#c9d7cd" font-size="13" font-weight="500">Basic strategy, EV, risk, bust heuristics</text>
+                        <text x="626" y="262">RecommendationAnalytics</text>
+                        <text x="626" y="286" fill="#c9d7cd" font-size="13" font-weight="500">Follow vs ignore metrics, accuracy</text>
+                        <text x="888" y="262">GameStatistics + SessionPersistence</text>
+                        <text x="888" y="286" fill="#c9d7cd" font-size="13" font-weight="500">Session metrics, JSON snapshot save/load</text>
+                        <text x="118" y="462">Card</text>
+                        <text x="242" y="462">Deck</text>
+                        <text x="384" y="462">Hand</text>
+                        <text x="520" y="462">Player</text>
+                        <text x="660" y="462">Dealer</text>
+                        <text x="796" y="462">PlayerHand</text>
+                        <text x="938" y="462">RoundResult / HandResult</text>
+                    </g>
+                    <g stroke="#e8c56e" stroke-width="3" fill="none" marker-end="url(#arrowKo)">
+                        <path d="M440 168 C440 195, 195 196, 195 228"/>
+                        <path d="M440 168 C440 195, 457 196, 457 228"/>
+                        <path d="M440 168 C440 195, 720 196, 720 228"/>
+                        <path d="M440 168 C440 195, 980 196, 980 228"/>
+                        <path d="M195 326 C195 380, 430 390, 430 430"/>
+                        <path d="M195 326 C195 390, 290 390, 290 430"/>
+                        <path d="M195 326 C195 390, 150 390, 150 430"/>
+                        <path d="M195 326 C195 390, 570 390, 570 430"/>
+                        <path d="M195 326 C195 390, 710 390, 710 430"/>
+                        <path d="M195 326 C195 390, 850 390, 850 430"/>
+                        <path d="M195 326 C195 390, 1030 390, 1030 430"/>
+                    </g>
+                </svg>
+            </div>
+            <div class="table-card">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Class</th>
+                            <th>Primary Responsibility</th>
+                            <th>Key Design Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="mono">Card</span></td>
+                            <td>Immutable suit/rank object with nominal blackjack value and ace detection.</td>
+                            <td>Separates symbolic identity from hand logic. Ace flexibility is handled in <span class="mono">Hand</span>, not here.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="mono">Deck</span></td>
+                            <td>Builds a standard 52-card deck, shuffles it, and deals in sequence.</td>
+                            <td>Reset/shuffle is round-scoped. The current engine uses a fresh deck every round rather than a reusable shoe.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="mono">Hand</span></td>
+                            <td>Tracks cards, computes best blackjack value, soft state, blackjack, bust, and split eligibility.</td>
+                            <td>The ace downgrade loop is the core of correct value evaluation.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="mono">Player</span></td>
+                            <td>Owns bankroll and enforces valid bet commitment / payout return.</td>
+                            <td>Bankroll mutation is centralized here, which prevents duplicate UI-side chip changes.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="mono">Dealer</span></td>
+                            <td>Owns dealer hand and dealer draw rule.</td>
+                            <td>Dealer policy is deliberately tiny: draw while value &lt; 17.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="mono">GameEngine</span></td>
+                            <td>Coordinates the full round lifecycle: bet commit, initial deal, action branching, dealer turn, settlement, statistics.</td>
+                            <td>This is the main orchestration boundary. UI code reads from it but does not own rule transitions.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="mono">RecommendationAnalytics</span></td>
+                            <td>Tracks whether users follow or ignore recommendations and what outcomes those choices lead to.</td>
+                            <td>Decisions are recorded per hand and attached to final <span class="mono">HandResult</span> objects after Settlement.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="mono">StrategyAdvisor</span></td>
+                            <td>Produces best move, reason, confidence, EV, bust risk, and dealer bust chance.</td>
+                            <td>It is rule-based and explainable, with fast heuristics rather than Monte Carlo search.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="mono">RoundResult</span></td>
+                            <td>Captures the resolved state of a round: outcome, chip delta, total bet, total payout, and per-hand details.</td>
+                            <td>Acts as the handoff object to UI overlays, statistics, and analytics.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="mono">SessionStatistics</span></td>
+                            <td>Implemented as <span class="mono">GameStatistics</span> plus snapshot DTOs for persistence and export.</td>
+                            <td>Tracks wins, losses, pushes, blackjacks, split usage, double-down usage, win streaks, and total P/L.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="page-index">03 / 08</div>
+        </section>
+
+        <section class="page">
+            <div class="section-header">
+                <div>
+                    <div class="section-number">04. Game Flow Algorithm</div>
+                    <h2>Round Lifecycle And Branching</h2>
+                </div>
+            </div>
+            <div class="two-col">
+                <div class="panel svg-card">
+                    <svg viewBox="0 0 720 980" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <marker id="flowArrowKo" markerWidth="12" markerHeight="12" refX="9" refY="6" orient="auto">
+                                <path d="M0,0 L12,6 L0,12 z" fill="#e8c56e"/>
+                            </marker>
+                        </defs>
+                        <rect x="250" y="20" width="220" height="60" rx="18" fill="#163a2a" stroke="#e8c56e"/>
+                        <text x="360" y="56" text-anchor="middle" fill="#fff5d0" font-size="22" font-weight="700">Start Session</text>
+                        <rect x="240" y="126" width="240" height="66" rx="18" fill="#173c2c" stroke="#d8e8da"/>
+                        <text x="360" y="158" text-anchor="middle" fill="#ffffff" font-size="18" font-weight="700">Choose / Validate Bet</text>
+                        <text x="360" y="179" text-anchor="middle" fill="#c9d7cd" font-size="14">must satisfy 0 &lt; bet ≤ chips</text>
+                        <rect x="218" y="238" width="284" height="76" rx="18" fill="#173f2d" stroke="#d8e8da"/>
+                        <text x="360" y="273" text-anchor="middle" fill="#ffffff" font-size="18" font-weight="700">GameEngine.startRound(bet)</text>
+                        <text x="360" y="296" text-anchor="middle" fill="#c9d7cd" font-size="14">commit bet → fresh deck → shuffle → deal opening cards</text>
+                        <rect x="175" y="360" width="370" height="90" rx="18" fill="#173f2d" stroke="#d8e8da"/>
+                        <text x="360" y="394" text-anchor="middle" fill="#fff5d0" font-size="18" font-weight="700">Initial Deal Animation Sequence</text>
+                        <text x="360" y="421" text-anchor="middle" fill="#c9d7cd" font-size="14">1. dealer visible card  2. player card  3. dealer hidden back card  4. player card</text>
+                        <polygon points="360,500 470,565 360,630 250,565" fill="#1b4733" stroke="#e8c56e"/>
+                        <text x="360" y="560" text-anchor="middle" fill="#fff8dc" font-size="18" font-weight="700">Natural Blackjack?</text>
+                        <text x="360" y="584" text-anchor="middle" fill="#d3dfd6" font-size="13">player and/or dealer after opening deal</text>
+                        <rect x="75" y="682" width="250" height="82" rx="18" fill="#173f2d" stroke="#d8e8da"/>
+                        <text x="200" y="714" text-anchor="middle" fill="#fff5d0" font-size="18" font-weight="700">Immediate Settlement</text>
+                        <text x="200" y="739" text-anchor="middle" fill="#c9d7cd" font-size="13">push / player blackjack / dealer blackjack</text>
+                        <rect x="398" y="678" width="250" height="88" rx="18" fill="#173f2d" stroke="#d8e8da"/>
+                        <text x="523" y="712" text-anchor="middle" fill="#fff5d0" font-size="18" font-weight="700">Player Turn Loop</text>
+                        <text x="523" y="736" text-anchor="middle" fill="#c9d7cd" font-size="13">hit / stand / double / split / hand switching</text>
+                        <rect x="398" y="818" width="250" height="72" rx="18" fill="#173f2d" stroke="#d8e8da"/>
+                        <text x="523" y="850" text-anchor="middle" fill="#fff5d0" font-size="18" font-weight="700">dealer turn</text>
+                        <text x="523" y="872" text-anchor="middle" fill="#c9d7cd" font-size="13">draw until score ≥ 17</text>
+                        <rect x="75" y="818" width="250" height="72" rx="18" fill="#173f2d" stroke="#d8e8da"/>
+                        <text x="200" y="850" text-anchor="middle" fill="#fff5d0" font-size="18" font-weight="700">Round Resolve</text>
+                        <text x="200" y="872" text-anchor="middle" fill="#c9d7cd" font-size="13">build HandResult + RoundResult</text>
+                        <rect x="218" y="922" width="284" height="40" rx="14" fill="#163a2a" stroke="#e8c56e"/>
+                        <text x="360" y="948" text-anchor="middle" fill="#fff5d0" font-size="16" font-weight="700">Statistics + Recommendation Analytics + Overlay</text>
+                        <g stroke="#e8c56e" stroke-width="3" fill="none" marker-end="url(#flowArrowKo)">
+                            <path d="M360 80 L360 126"/>
+                            <path d="M360 192 L360 238"/>
+                            <path d="M360 314 L360 360"/>
+                            <path d="M360 450 L360 500"/>
+                            <path d="M250 565 L200 565 L200 682"/>
+                            <path d="M470 565 L523 565 L523 678"/>
+                            <path d="M523 766 L523 818"/>
+                            <path d="M523 890 L523 904 L200 904 L200 818"/>
+                            <path d="M200 890 L200 922"/>
+                        </g>
+                        <text x="214" y="553" fill="#fff5d0" font-size="13" font-weight="700">Yes</text>
+                        <text x="487" y="553" fill="#fff5d0" font-size="13" font-weight="700">No</text>
+                    </svg>
+                </div>
+                <div class="section">
+                    <div class="panel">
+                        <h3 style="margin-top: 0;">Step-by-Step Lifecycle</h3>
+                        <ol class="list-tight">
+                            <li><strong>Bankroll + bet validation.</strong> The player must have enough chips to commit the opening stake.</li>
+                            <li><strong>Fresh deck initialization.</strong> The engine creates a new deck and shuffles it every round.</li>
+                            <li><strong>Opening hand creation.</strong> The engine builds one <span class="mono">PlayerHand</span> and deals two player cards and two dealer cards.</li>
+                            <li><strong>Natural blackjack check.</strong> Before normal play begins, the engine resolves immediate blackjack outcomes.</li>
+                            <li><strong>Player decision loop.</strong> The active hand can hit, stand, double down, or split, subject to availability.</li>
+                            <li><strong>Multi-hand sequencing.</strong> Split hands are queued sequentially, and the active index advances to the next open hand.</li>
+                            <li><strong>Dealer turn.</strong> If at least one player hand survives, the dealer draws until the policy threshold is met.</li>
+                            <li><strong>Settlement.</strong> Each hand becomes a <span class="mono">HandResult</span>; the round becomes a <span class="mono">RoundResult</span>.</li>
+                            <li><strong>Session update.</strong> Statistics, recommendation analytics, overlays, chips, and labels refresh from the resolved result object.</li>
+                        </ol>
+                    </div>
+                    <div class="callout">
+                        <strong>Initial dealing split between engine and UI.</strong>
+                        The engine mutates authoritative game state immediately when a round begins.
+                        The UI then plays the opening sequence against that already-resolved state, which keeps
+                        animations deterministic without moving rule logic into JavaFX.
+                    </div>
+                    <div class="formula">
+                        <h4 style="margin-top: 0;">Payout Settlement Contract</h4>
+                        <pre>B = committed bet for a hand
+P = payout returned to bankroll
+Δchips = P - B
+
+Normal win:        P = 2B,  Δchips = +B
+Push:              P = B,   Δchips = 0
+Loss / bust:       P = 0,   Δchips = -B
+Natural blackjack: current implementation also uses P = 2B</pre>
+                    </div>
+                </div>
+            </div>
+            <div class="page-index">04 / 08</div>
+        </section>
+
+        <section class="page">
+            <div class="section-header">
+                <div>
+                    <div class="section-number">05. Strategy Recommendation Algorithm</div>
+                    <h2>Decision Engine, Heuristics, And Analysis Fields</h2>
+                </div>
+            </div>
+            <div class="two-col equal">
+                <div class="panel svg-card">
+                    <svg viewBox="0 0 720 520" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <marker id="logicArrowKo" markerWidth="12" markerHeight="12" refX="9" refY="6" orient="auto">
+                                <path d="M0,0 L12,6 L0,12 z" fill="#e8c56e"/>
+                            </marker>
+                        </defs>
+                        <rect x="230" y="20" width="260" height="54" rx="16" fill="#163a2a" stroke="#e8c56e"/>
+                        <text x="360" y="53" text-anchor="middle" fill="#fff5d0" font-size="20" font-weight="700">Active PlayerHand + Dealer Up-card</text>
+                        <polygon points="360,108 470,168 360,228 250,168" fill="#1b4733" stroke="#e8c56e"/>
+                        <text x="360" y="166" text-anchor="middle" fill="#fff6d9" font-size="18" font-weight="700">Can Split &amp; Pair?</text>
+                        <rect x="50" y="278" width="180" height="72" rx="16" fill="#173f2d" stroke="#d8e8da"/>
+                        <text x="140" y="308" text-anchor="middle" fill="#fff5d0" font-size="16" font-weight="700">Pair Split Rules</text>
+                        <text x="140" y="332" text-anchor="middle" fill="#c9d7cd" font-size="13">A/A, 8/8, 9/9, 7/7 ...</text>
+                        <polygon points="360,278 470,338 360,398 250,338" fill="#1b4733" stroke="#e8c56e"/>
+                        <text x="360" y="336" text-anchor="middle" fill="#fff6d9" font-size="18" font-weight="700">Soft Hand?</text>
+                        <rect x="490" y="278" width="180" height="72" rx="16" fill="#173f2d" stroke="#d8e8da"/>
+                        <text x="580" y="308" text-anchor="middle" fill="#fff5d0" font-size="16" font-weight="700">Hard Rules</text>
+                        <text x="580" y="332" text-anchor="middle" fill="#c9d7cd" font-size="13">17+ stand, 11 double ...</text>
+                        <rect x="270" y="432" width="180" height="70" rx="16" fill="#173f2d" stroke="#d8e8da"/>
+                        <text x="360" y="462" text-anchor="middle" fill="#fff5d0" font-size="16" font-weight="700">Soft Rules</text>
+                        <text x="360" y="486" text-anchor="middle" fill="#c9d7cd" font-size="13">Soft 18, 19, 17 patterns</text>
+                        <g stroke="#e8c56e" stroke-width="3" fill="none" marker-end="url(#logicArrowKo)">
+                            <path d="M360 74 L360 108"/>
+                            <path d="M250 168 L140 168 L140 278"/>
+                            <path d="M470 168 L580 168 L580 278"/>
+                            <path d="M360 228 L360 278"/>
+                            <path d="M360 398 L360 432"/>
+                        </g>
+                        <text x="118" y="154" fill="#fff5d0" font-size="13" font-weight="700">Yes</text>
+                        <text x="597" y="154" fill="#fff5d0" font-size="13" font-weight="700">No</text>
+                    </svg>
+                </div>
+                <div class="panel">
+                    <h3 style="margin-top: 0;">Recommendation Pipeline</h3>
+                    <ol class="list-tight">
+                        <li>Read the currently active hand and the dealer's visible up-card.</li>
+                        <li>Map the dealer card into a strategy value where face cards become 10 and ace becomes 11.</li>
+                        <li>If split is available and the hand is a pair, evaluate split rules first.</li>
+                        <li>If not split, branch into <span class="mono">soft total</span> or <span class="mono">hard total</span> strategy tables.</li>
+                        <li>Return the action plus reason string.</li>
+                        <li>Derive analysis metadata: confidence, win tendency, risk level, EV, bust risk, dealer bust chance.</li>
+                    </ol>
+                    <div class="callout" style="margin-top: 12px;">
+                        <strong>Why split rules come first.</strong>
+                        Pair splitting is not merely a total-based decision. It restructures the game tree into
+                        two separate betting branches, so it must be evaluated before soft or hard total logic.
+                    </div>
+                </div>
+            </div>
+            <div class="three-col" style="margin-top: 16px;">
+                <div class="table-card">
+                    <table>
+                        <thead><tr><th colspan="2">Pair Split Rules</th></tr></thead>
+                        <tbody>
+                            <tr><td>A,A / 8,8</td><td>Always split</td></tr>
+                            <tr><td>9,9</td><td>Split vs dealer 2-6, 8, 9</td></tr>
+                            <tr><td>7,7</td><td>Split vs dealer 2-7</td></tr>
+                            <tr><td>6,6</td><td>Split vs dealer 2-6</td></tr>
+                            <tr><td>4,4</td><td>Split vs dealer 5-6</td></tr>
+                            <tr><td>2,2 / 3,3</td><td>Split vs dealer 2-7</td></tr>
+                            <tr><td>5,5 / 10-value pair</td><td>Do not split</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="table-card">
+                    <table>
+                        <thead><tr><th colspan="2">Soft Total Rules</th></tr></thead>
+                        <tbody>
+                            <tr><td>Soft 20</td><td>Stand</td></tr>
+                            <tr><td>Soft 19</td><td>Double vs 6, else stand</td></tr>
+                            <tr><td>Soft 18</td><td>Double vs 3-6, stand vs 2/7/8, hit vs 9/10/A</td></tr>
+                            <tr><td>Soft 17</td><td>Double/hit vs 3-6, else hit</td></tr>
+                            <tr><td>Soft 15-16</td><td>Double/hit vs 4-6, else hit</td></tr>
+                            <tr><td>Soft 13-14</td><td>Double/hit vs 5-6, else hit</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="table-card">
+                    <table>
+                        <thead><tr><th colspan="2">Hard Total Rules</th></tr></thead>
+                        <tbody>
+                            <tr><td>17+</td><td>Stand</td></tr>
+                            <tr><td>13-16</td><td>Stand vs dealer 2-6, else hit</td></tr>
+                            <tr><td>12</td><td>Stand vs 4-6, else hit</td></tr>
+                            <tr><td>11</td><td>Double vs non-ace, else hit</td></tr>
+                            <tr><td>10</td><td>Double vs 2-9, else hit</td></tr>
+                            <tr><td>9</td><td>Double vs 3-6, else hit</td></tr>
+                            <tr><td>8 or less</td><td>Hit</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="grid-note" style="margin-top: 16px;">
+                    <div class="mini-card">
+                        <div class="title">Confidence</div>
+                        <p>
+                            Confidence is highest for canonical strategy states such as splitting aces or eights,
+                            doubling hard 11 against a non-ace, or hitting hard totals that are clearly below 12.
+                            Edge cases degrade to medium confidence.
+                        </p>
+                    </div>
+                    <div class="mini-card">
+                        <div class="title">Risk &amp; Tendencies</div>
+                        <p>
+                            Risk rises for double down, split branches, and hard hit states near bust thresholds.
+                            Win tendency is based on hand softness, total strength, and dealer weakness or strength.
+                        </p>
+                    </div>
+            </div>
+            <div class="page-index">05 / 08</div>
+        </section>
+
+        <section class="page">
+            <div class="section-header">
+                <div>
+                    <div class="section-number">06. Mathematical Logic</div>
+                    <h2>Formulas, Heuristics, And Normalized Metrics</h2>
+                </div>
+            </div>
+            <div class="two-col equal">
+                <div class="section">
+                    <div class="formula">
+                        <h4 style="margin-top: 0;">Ace-Aware Hand Value</h4>
+                        <pre>total = Σ nominalCardValue
+aces = count(Ace)
+
+while total &gt; 21 and aces &gt; 0:
+    total = total - 10
+    aces = aces - 1
+
+bestValue = total
+softHand = at least one Ace remains valued as 11</pre>
+                    </div>
+                    <div class="formula">
+                        <h4 style="margin-top: 0;">Bust Risk</h4>
+                        <pre>BustRisk(hand) =
+    Σ [ w(r) × I( bust(hand + r) ) ] / Σ w(r)
+
+where:
+    w(2..9) = 4
+    w(10/J/Q/K bucket) = 16
+    w(A) = 4</pre>
+                        <p class="small" style="margin-top: 10px;">
+                            The strategy engine simulates a one-card draw against a weighted abstract rank distribution,
+                            which is fast enough for every UI refresh.
+                        </p>
+                    </div>
+                    <div class="formula">
+                        <h4 style="margin-top: 0;">Dealer Bust Chance</h4>
+                        <pre>DealerBustChance(upCard) = lookup(upCard)
+
+2 → 0.35   3 → 0.37   4 → 0.40   5 → 0.42   6 → 0.42
+7 → 0.26   8 → 0.24   9 → 0.23   10 → 0.21   A → 0.17</pre>
+                    </div>
+                </div>
+                <div class="section">
+                    <div class="formula">
+                        <h4 style="margin-top: 0;">Expected Value Heuristic</h4>
+                        <pre>EV =
+    softBias
+  + dealerWeaknessBias
+  + totalStrengthBias
+  + actionBonus
+  - actionBustPenalty
+  + 0.42 × DealerBustChance
+
+Clamp(EV, -0.65, +0.65)</pre>
+                        <p class="small" style="margin-top: 10px;">
+                            This is a normalized engineering heuristic, not exact combinatorial EV.
+                            It is intentionally fast, explainable, and stable under frequent UI refresh.
+                        </p>
+                    </div>
+                    <div class="formula">
+                        <h4 style="margin-top: 0;">Win Rate, Session Profit, Recommendation Accuracy</h4>
+                        <pre>ResolvedHands = wins + losses + pushes
+WinRate = wins / ResolvedHands
+
+SessionProfit = Σ roundChipDelta
+
+FollowRate = totalRecommendationsFollowed / totalRecommendationsShown
+
+RecommendationAccuracy =
+    (followedWins + followedPushes) / resolvedFollowedCount</pre>
+                    </div>
+                    <div class="formula">
+                        <h4 style="margin-top: 0;">Payout And Bankroll Integrity</h4>
+                        <pre>On round start:
+    player.commitBet(B)
+
+On split / double:
+    player.commitBet(additionalStake)
+
+At settlement:
+    player.receivePayout(totalPayoutAmount)
+
+ChipDelta = totalPayoutAmount - totalCommittedBet</pre>
+                        <p class="small" style="margin-top: 10px;">
+                            The engine performs payout exactly once during <span class="mono">finishRound(...)</span>,
+                            which prevents duplicate bankroll updates from UI actions.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="table-card" style="margin-top: 16px;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Interpretation</th>
+                            <th>Engineering Tradeoff</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Expected EV</td>
+                            <td>Normalized directional estimate of long-term value for the recommended action.</td>
+                            <td>Fast enough for live UI updates, but intentionally approximate.</td>
+                        </tr>
+                        <tr>
+                            <td>Bust Risk</td>
+                            <td>Probability that drawing one more card immediately busts the current hand.</td>
+                            <td>Uses weighted ranks, not exact remaining-deck composition.</td>
+                        </tr>
+                        <tr>
+                            <td>Dealer Bust Chance</td>
+                            <td>Precomputed weakness estimate derived from the visible dealer up-card.</td>
+                            <td>Near constant-time and stable; ideal for UI explanation.</td>
+                        </tr>
+                        <tr>
+                            <td>Confidence</td>
+                            <td>How strongly the decision matches canonical strategy patterns.</td>
+                            <td>Categorical, human-readable, intentionally not statistical confidence.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="page-index">06 / 08</div>
+        </section>
+
+        <section class="page">
+            <div class="section-header">
+                <div>
+                    <div class="section-number">07. UI-State Synchronization</div>
+                    <h2>Keeping JavaFX Presentation Aligned With Engine State</h2>
+                </div>
+            </div>
+            <div class="two-col">
+                <div class="panel svg-card">
+                    <svg viewBox="0 0 760 720" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <marker id="seqArrowKo" markerWidth="12" markerHeight="12" refX="9" refY="6" orient="auto">
+                                <path d="M0,0 L12,6 L0,12 z" fill="#e8c56e"/>
+                            </marker>
+                        </defs>
+                        <text x="90" y="40" fill="#fff4cd" font-size="18" font-weight="800">User</text>
+                        <text x="260" y="40" fill="#fff4cd" font-size="18" font-weight="800">BlackjackController</text>
+                        <text x="515" y="40" fill="#fff4cd" font-size="18" font-weight="800">GameEngine / StrategyAdvisor</text>
+                        <line x1="100" y1="60" x2="100" y2="680" stroke="rgba(255,255,255,0.18)" stroke-dasharray="6 6"/>
+                        <line x1="300" y1="60" x2="300" y2="680" stroke="rgba(255,255,255,0.18)" stroke-dasharray="6 6"/>
+                        <line x1="560" y1="60" x2="560" y2="680" stroke="rgba(255,255,255,0.18)" stroke-dasharray="6 6"/>
+                        <rect x="40" y="88" width="120" height="42" rx="12" fill="#173b2b" stroke="#d8e8da"/>
+                        <text x="100" y="114" text-anchor="middle" fill="#fff5d0" font-size="14" font-weight="700">Deal Cards</text>
+                        <rect x="224" y="164" width="150" height="58" rx="14" fill="#173f2d" stroke="#d8e8da"/>
+                        <text x="299" y="191" text-anchor="middle" fill="#fff5d0" font-size="15" font-weight="700">playInitialDealSequence()</text>
+                        <text x="299" y="211" text-anchor="middle" fill="#c9d7cd" font-size="12">control lock + animation</text>
+                        <rect x="472" y="264" width="176" height="66" rx="14" fill="#173f2d" stroke="#d8e8da"/>
+                        <text x="560" y="291" text-anchor="middle" fill="#fff5d0" font-size="15" font-weight="700">startRound(bet)</text>
+                        <text x="560" y="313" text-anchor="middle" fill="#c9d7cd" font-size="12">authoritative game state created</text>
+                        <rect x="224" y="374" width="150" height="58" rx="14" fill="#173f2d" stroke="#d8e8da"/>
+                        <text x="299" y="401" text-anchor="middle" fill="#fff5d0" font-size="15" font-weight="700">updateUi()</text>
+                        <text x="299" y="421" text-anchor="middle" fill="#c9d7cd" font-size="12">header + cards + footer</text>
+                        <rect x="472" y="480" width="176" height="66" rx="14" fill="#173f2d" stroke="#d8e8da"/>
+                        <text x="560" y="507" text-anchor="middle" fill="#fff5d0" font-size="15" font-weight="700">recommend(...)</text>
+                        <text x="560" y="529" text-anchor="middle" fill="#c9d7cd" font-size="12">best move + metrics</text>
+                        <rect x="224" y="590" width="150" height="66" rx="14" fill="#173f2d" stroke="#d8e8da"/>
+                        <text x="299" y="617" text-anchor="middle" fill="#fff5d0" font-size="15" font-weight="700">refresh labels</text>
+                        <text x="299" y="639" text-anchor="middle" fill="#c9d7cd" font-size="12">scores, chips, stats, overlay</text>
+                        <g stroke="#e8c56e" stroke-width="3" fill="none" marker-end="url(#seqArrowKo)">
+                            <path d="M100 108 L300 108"/>
+                            <path d="M300 196 L560 196"/>
+                            <path d="M560 300 L300 300"/>
+                            <path d="M300 404 L560 404"/>
+                            <path d="M560 513 L300 513"/>
+                            <path d="M300 623 L100 623"/>
+                        </g>
+                    </svg>
+                </div>
+                <div class="section">
+                    <div class="panel">
+                        <h3 style="margin-top: 0;">Synchronization Strategy</h3>
+                        <ul class="list-tight">
+                            <li><strong>Engine-first state.</strong> Rules update first; animations render the already-valid state.</li>
+                            <li><strong>Single refresh hub.</strong> <span class="mono">updateUi()</span> coordinates headers, cards, recommendation panel, footer metrics, controls, and round-end effects.</li>
+                            <li><strong>Animation gating.</strong> The controller uses explicit flags such as <span class="mono">animationInProgress</span> and <span class="mono">initialDealAnimationInProgress</span> to keep buttons disabled during transitions.</li>
+                            <li><strong>Split-hand awareness.</strong> The active hand index drives highlighting, score display, and recommendation context.</li>
+                            <li><strong>Resolved-state handoff.</strong> Once a round is over, recommendation values switch from live analysis to a safe “round complete” state, while overlays and settlement chip animations take over.</li>
+                        </ul>
+                    </div>
+                    <div class="table-card">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>UI Concern</th>
+                                    <th>Update Trigger</th>
+                                    <th>Source Of Truth</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>card dealing animation</td>
+                                    <td>opening deal, hit, dealer draw, dealer reveal</td>
+                                    <td>Controller animation helpers reading engine-owned hands</td>
+                                </tr>
+                                <tr>
+                                    <td>chip balance</td>
+                                    <td>Bet commit, clear bet, settlement, reset, session load</td>
+                                    <td><span class="mono">Player.chips</span> + displayed animation state</td>
+                                </tr>
+                                <tr>
+                                    <td>hand score label</td>
+                                    <td>Initial deal finish, hit completion, dealer reveal/draw</td>
+                                    <td><span class="mono">Hand.getBestValue()</span></td>
+                                </tr>
+                                <tr>
+                                    <td>recommendation panel</td>
+                                    <td>Initial deal, every hit, split, hand switch, double, dealer reveal, round resolve, session load</td>
+                                    <td><span class="mono">StrategyAdvisor.recommend(...)</span></td>
+                                </tr>
+                                <tr>
+                                    <td>session save/load</td>
+                                    <td>Utility buttons</td>
+                                    <td>Snapshot DTOs + manual JSON serializer/parser</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="page-index">07 / 08</div>
+        </section>
+
+        <section class="page">
+            <div class="section-header">
+                <div>
+                    <div class="section-number">08. Performance &amp; Optimization</div>
+                    <h2>Optimization Opportunities And Rendering Efficiency</h2>
+                </div>
+            </div>
+            <div class="three-col">
+                <div class="mini-card">
+                    <div class="title">Current Performance Characteristics</div>
+                    <ul class="list-tight">
+                        <li>Fresh deck + shuffle per round keeps state simple and deterministic.</li>
+                        <li>PNG card images are cached in memory after first load.</li>
+                        <li>Dealer bust probabilities are constant-time lookups.</li>
+                        <li>Bust risk runs against a ten-rank weighted distribution, not full deck permutations.</li>
+                    </ul>
+                </div>
+                <div class="mini-card">
+                    <div class="title">Optimization Opportunities</div>
+                    <ul class="list-tight">
+                        <li><span class="mono">(hand signature, dealer up-card, action)</span> by <span class="mono">(hand signature, dealer up-card, action)</span>.</li>
+                        <li>Upgrade from per-round deck rebuilds to a multi-deck shoe for casino realism.</li>
+                        <li>Add split recursion caching when multiple re-splits are introduced.</li>
+                        <li>Batch some JavaFX node refreshes when large split layouts are active.</li>
+                    </ul>
+                </div>
+                <div class="mini-card">
+                    <div class="title">Rendering Optimizations</div>
+                    <ul class="list-tight">
+                        <li>Use a dedicated animation layer so transient cards and chips do not relayout the entire scene.</li>
+                        <li>Preserve consistent card dimensions to avoid layout thrash during dealing.</li>
+                        <li>Keep card images rasterized and cached to avoid runtime SVG decoding cost.</li>
+                        <li>Separate stable felt/background layers from dynamic overlays.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="section-header" style="margin-top: 18px;">
+                <div>
+                    <div class="section-number">09. Future Upgrade Roadmap</div>
+                    <h3 style="margin: 0; color: var(--accent-soft);">Strategic Expansion Paths</h3>
+                </div>
+            </div>
+            <div class="table-card" style="margin-top: 8px;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Roadmap Item</th>
+                            <th>Technical Value</th>
+                            <th>Implementation Direction</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Monte Carlo simulation mode</td>
+                            <td>Exact probability surfaces and stronger EV estimates.</td>
+                            <td>Add simulation workers behind the same recommendation interface.</td>
+                        </tr>
+                        <tr>
+                            <td>reinforcement learning strategy</td>
+                            <td>Enables comparative analysis against basic strategy.</td>
+                            <td>Introduce pluggable policy engines with offline training data.</td>
+                        </tr>
+                        <tr>
+                            <td>multiplayer support</td>
+                            <td>Expands the engine from one player to seat-based table state.</td>
+                            <td>Generalize <span class="mono">PlayerHand</span> ownership and turn sequencing.</td>
+                        </tr>
+                        <tr>
+                            <td>online leaderboard</td>
+                            <td>Adds persistence, ranking, and product-like engagement.</td>
+                            <td>Persist snapshots to a backend service or local database.</td>
+                        </tr>
+                        <tr>
+                            <td>probability heatmap</td>
+                            <td>Makes recommendation confidence and EV visually explorable.</td>
+                            <td>Render matrix overlays from strategy engine outputs.</td>
+                        </tr>
+                        <tr>
+                            <td>mobile version</td>
+                            <td>Validates engine portability beyond desktop JavaFX.</td>
+                            <td>Reuse engine and analytics layers behind a mobile UI shell.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="section-header" style="margin-top: 18px;">
+                <div>
+                    <div class="section-number">10. Final Engineering Summary</div>
+                    <h3 style="margin: 0; color: var(--accent-soft);">Why This Reads As A Real Engineering Portfolio Piece</h3>
+                </div>
+            </div>
+            <div class="panel" style="margin-top: 8px;">
+                <p>
+                    This project demonstrates a strong full-stack engineering profile because it treats a seemingly
+                    simple game as a serious systems problem. The codebase combines a clean OOP domain model,
+                    explicit state transitions, rule-based recommendation logic, analytics instrumentation, persistence,
+                    and a premium JavaFX desktop front-end.
+                </p>
+                <p>
+                    The most portfolio-worthy characteristic is not that the application can deal cards. It is that the
+                    application can <strong>justify decisions</strong>, <strong>measure behavioral outcomes</strong>,
+                    <strong>animate state without corrupting logic</strong>, and <strong>persist a meaningful session model</strong>.
+                    Those qualities make the project suitable for GitHub showcase material, system design discussion,
+                    and interview walkthroughs that emphasize architecture, correctness, and product thinking.
+                </p>
+                <div class="kpi-grid" style="margin-top: 14px;">
+                    <div class="stat">
+                        <div class="stat-label">Architecture</div>
+                        <div class="stat-value">Reusable Engine</div>
+                        <div class="stat-note">Rules stay independent from JavaFX rendering.</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Analysis</div>
+                        <div class="stat-value">Explainable Strategy</div>
+                        <div class="stat-note">Every recommendation is paired with rationale and metrics.</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Presentation</div>
+                        <div class="stat-value">Premium Desktop UX</div>
+                        <div class="stat-note">Casino-style visuals, animations, overlays, and session tools.</div>
+                    </div>
+                </div>
+                <p class="footer-note">
+                    Technical note: this document reflects the current implementation faithfully, including even-money
+                    blackjack payout, one-split-per-round support, and heuristic EV/risk models designed for fast UI refresh.
+                </p>
+            </div>
+            <div class="page-index">08 / 08</div>
+        </section>
+    </div>
+</body>
+</html>
+

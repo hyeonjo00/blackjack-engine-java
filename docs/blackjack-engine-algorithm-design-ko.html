@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>프리미엄 JavaFX 블랙잭 시뮬레이터 - 알고리즘 설계 및 전략 엔진 기술 문서</title>
+    <style>
+        @page { size: A4; margin: 14mm; }
+        :root {
+            --bg-card: rgba(13, 30, 23, 0.94);
+            --bg-card-soft: rgba(16, 38, 28, 0.92);
+            --ink: #f5f7f3;
+            --muted: #b9cabe;
+            --accent: #e8c56e;
+            --accent-soft: #f4dfaa;
+            --line: rgba(232, 197, 110, 0.22);
+            --shadow: rgba(0, 0, 0, 0.28);
+            --mono: "Consolas", "SFMono-Regular", "Liberation Mono", monospace;
+            --sans: "Malgun Gothic", "맑은 고딕", "Noto Sans KR", "Apple SD Gothic Neo", "Segoe UI", Arial, sans-serif;
+        }
+        * { box-sizing: border-box; }
+        html, body {
+            margin: 0;
+            padding: 0;
+            background:
+                radial-gradient(circle at top, rgba(232, 197, 110, 0.10), transparent 24%),
+                linear-gradient(180deg, #08150f 0%, #0a1b14 48%, #07120d 100%);
+            color: var(--ink);
+            font-family: var(--sans);
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        .document { width: 100%; }
+        .page {
+            position: relative;
+            min-height: calc(297mm - 28mm);
+            padding: 18mm 18mm 16mm;
+            background:
+                radial-gradient(circle at 50% 10%, rgba(245, 226, 158, 0.08), transparent 20%),
+                linear-gradient(180deg, rgba(11, 23, 17, 0.98), rgba(7, 17, 12, 0.98));
+            border: 1px solid rgba(232, 197, 110, 0.10);
+            overflow: hidden;
+        }
+        .page + .page { page-break-before: always; }
+        .page::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(circle at 50% 16%, rgba(232, 197, 110, 0.06), transparent 26%),
+                radial-gradient(circle at 90% 10%, rgba(78, 168, 114, 0.10), transparent 18%),
+                linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.06) 100%);
+            pointer-events: none;
+        }
+        .page > * { position: relative; z-index: 1; }
+        .eyebrow {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: rgba(232, 197, 110, 0.10);
+            border: 1px solid rgba(232, 197, 110, 0.22);
+            color: var(--accent-soft);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+        }
+        h1, h2, h3, h4 { margin: 0 0 10px; line-height: 1.2; }
+        h1 { font-size: 34px; font-weight: 800; letter-spacing: -0.02em; }
+        h2 { font-size: 26px; color: var(--accent-soft); }
+        h3 { font-size: 18px; color: var(--accent-soft); margin-top: 20px; }
+        h4 { font-size: 14px; color: #eff6ef; letter-spacing: 0.03em; text-transform: uppercase; }
+        p, li { color: var(--muted); font-size: 13px; line-height: 1.65; margin: 0 0 10px; word-break: keep-all; }
+        ul, ol { margin: 0 0 10px 20px; padding: 0; }
+        .lead { font-size: 15px; color: #dce6de; }
+        .hero { display: grid; grid-template-columns: 1.45fr 0.95fr; gap: 18px; min-height: 228mm; align-items: end; }
+        .hero-card, .panel, .callout, .stat, .formula, .mini-card, .table-card {
+            background: var(--bg-card);
+            border: 1px solid var(--line);
+            border-radius: 20px;
+            box-shadow: 0 18px 34px var(--shadow);
+        }
+        .hero-card { padding: 28px; }
+        .hero-badges { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+        .badge {
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            color: #eef5ef;
+            font-size: 11.5px;
+            font-weight: 700;
+        }
+        .section { display: grid; gap: 16px; }
+        .section-header { display: flex; align-items: end; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+        .section-number { font-size: 13px; color: var(--accent); font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; }
+        .two-col { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 16px; }
+        .two-col.equal { grid-template-columns: 1fr 1fr; }
+        .three-col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+        .panel { padding: 18px 18px 16px; }
+        .panel p:last-child, .panel ul:last-child, .panel ol:last-child { margin-bottom: 0; }
+        .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+        .stat { padding: 14px 14px 12px; }
+        .stat-label { font-size: 11px; color: #cfdbc7; text-transform: uppercase; letter-spacing: 0.14em; margin-bottom: 10px; }
+        .stat-value { font-size: 22px; font-weight: 800; color: #fff8e8; line-height: 1.18; }
+        .stat-note { font-size: 11.5px; color: #aebcaf; margin-top: 6px; }
+        .callout { padding: 16px 18px; background: linear-gradient(180deg, rgba(18, 41, 30, 0.98), rgba(12, 27, 21, 0.98)); }
+        .callout strong { color: #fff5d6; }
+        .formula { padding: 14px 16px; background: linear-gradient(180deg, rgba(12, 29, 22, 0.98), rgba(9, 21, 16, 0.98)); }
+        .formula code, pre, .mono { font-family: var(--mono); }
+        pre {
+            margin: 0;
+            padding: 14px 16px;
+            background: rgba(4, 10, 8, 0.92);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            color: #eef5ef;
+            font-size: 12px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        .table-card { overflow: hidden; }
+        thead th {
+            background: rgba(232, 197, 110, 0.10);
+            color: #fff2c5;
+            font-size: 12px;
+            font-weight: 800;
+            text-align: left;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+        }
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+            vertical-align: top;
+            font-size: 12.4px;
+            line-height: 1.55;
+        }
+        td { color: var(--muted); }
+        tbody tr:last-child td { border-bottom: 0; }
+        .svg-card { padding: 8px; overflow: hidden; }
+        svg { width: 100%; height: auto; display: block; }
+        .list-tight li { margin-bottom: 6px; }
+        .grid-note { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .mini-card { padding: 12px 14px; background: var(--bg-card-soft); }
+        .mini-card .title { font-size: 12px; font-weight: 800; color: #fff3cb; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .small { font-size: 11.5px; }
+        .accent { color: var(--accent-soft); }
+        .footer-note { margin-top: 14px; font-size: 11.5px; color: #98ab9d; }
+        .page-index {
+            position: absolute;
+            bottom: 10mm;
+            right: 18mm;
+            color: rgba(255, 255, 255, 0.42);
+            font-size: 10px;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+        }
+        .signature { margin-top: 26px; font-size: 12px; color: #cedbce; }
+    </style>
+</head>
+<body>
+    <div class="document">
+        <section class="page">
+            <div class="hero">
+                <div class="hero-card">
+                    <div class="eyebrow">Algorithm Design &amp; Strategy Engine Documentation</div>
+                    <h1 style="margin-top: 18px;">프리미엄 JavaFX 블랙잭 시뮬레이터</h1>
+                    <h2>알고리즘 설계 및 전략 엔진 기술 문서</h2>
+                    <p class="lead" style="margin-top: 18px;">
+                        재사용 가능한 규칙 엔진, JavaFX 프레젠테이션 계층, 실시간 전략 분석,
+                        애니메이션 기반 테이블 UX, 세션 영속화, 추천 정확도 분석을 통합한
+                        포트폴리오급 Java 데스크톱 블랙잭 시스템이다.
+                    </p>
+                    <div class="hero-badges">
+                        <span class="badge">Java + JavaFX + FXML + CSS</span>
+                        <span class="badge">Single-player vs Dealer</span>
+                        <span class="badge">Strategy Analysis</span>
+                        <span class="badge">Session Persistence</span>
+                        <span class="badge">Recommendation Accuracy</span>
+                    </div>
+                    <div class="signature">
+                        <div><strong>작성자:</strong> Hyeonjo Kim</div>
+                        <div><strong>문서 유형:</strong> Software Engineering Design Document / Technical Whitepaper</div>
+                    </div>
+                </div>
+                <div class="section" style="align-self: stretch;">
+                    <div class="panel">
+                        <h3 style="margin-top: 0;">문서 범위</h3>
+                        <ul class="list-tight">
+                            <li>핵심 객체 모델과 엔진 책임 분리</li>
+                            <li>라운드 생명주기와 분기 알고리즘</li>
+                            <li>규칙 기반 전략 추천 엔진</li>
+                            <li>Expected EV, Bust Risk, Dealer Bust Chance 휴리스틱</li>
+                            <li>JavaFX 상태 동기화와 애니메이션 구조</li>
+                            <li>성능 최적화, 세션 영속화, 향후 확장 방향</li>
+                        </ul>
+                    </div>
+                    <div class="panel svg-card">
+                        <svg viewBox="0 0 520 360" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <linearGradient id="feltKo" x1="0" x2="0" y1="0" y2="1">
+                                    <stop offset="0%" stop-color="#19553d"/>
+                                    <stop offset="100%" stop-color="#0b2f21"/>
+                                </linearGradient>
+                                <linearGradient id="cardFrontKo" x1="0" x2="0" y1="0" y2="1">
+                                    <stop offset="0%" stop-color="#fbfaf4"/>
+                                    <stop offset="100%" stop-color="#ece6d7"/>
+                                </linearGradient>
+                            </defs>
+                            <rect x="18" y="18" width="484" height="324" rx="36" fill="url(#feltKo)" stroke="rgba(232,197,110,0.45)"/>
+                            <ellipse cx="260" cy="70" rx="120" ry="26" fill="rgba(255,255,255,0.07)"/>
+                            <text x="260" y="78" text-anchor="middle" fill="#f6eec9" font-size="24" font-weight="700">Dealer Zone</text>
+                            <circle cx="260" cy="182" r="60" fill="rgba(8,34,23,0.88)" stroke="#e8c56e" stroke-width="3"/>
+                            <text x="260" y="173" text-anchor="middle" fill="#f4e9c1" font-size="18" font-weight="700">Bet</text>
+                            <text x="260" y="197" text-anchor="middle" fill="#fff8de" font-size="24" font-weight="800">25</text>
+                            <ellipse cx="260" cy="294" rx="132" ry="26" fill="rgba(255,255,255,0.07)"/>
+                            <text x="260" y="301" text-anchor="middle" fill="#f6eec9" font-size="24" font-weight="700">Player Zone</text>
+                            <g transform="translate(152 96) rotate(-3)">
+                                <rect width="78" height="108" rx="10" fill="url(#cardFrontKo)" stroke="#1a201d" stroke-width="2"/>
+                                <text x="18" y="26" fill="#1d2521" font-size="18" font-weight="700">10</text>
+                                <text x="33" y="58" fill="#c23636" font-size="26">♥</text>
+                            </g>
+                            <g transform="translate(238 94) rotate(2)">
+                                <rect width="78" height="108" rx="10" fill="#143b77" stroke="#f4e5b2" stroke-width="2"/>
+                                <rect x="10" y="10" width="58" height="88" rx="7" fill="none" stroke="#f4e5b2" stroke-dasharray="4 3"/>
+                            </g>
+                            <g transform="translate(182 230) rotate(-4)">
+                                <rect width="78" height="108" rx="10" fill="url(#cardFrontKo)" stroke="#1a201d" stroke-width="2"/>
+                                <text x="18" y="26" fill="#1d2521" font-size="18" font-weight="700">A</text>
+                                <text x="33" y="58" fill="#1d2521" font-size="26">♠</text>
+                            </g>
+                            <g transform="translate(270 228) rotate(3)">
+                                <rect width="78" height="108" rx="10" fill="url(#cardFrontKo)" stroke="#1a201d" stroke-width="2"/>
+                                <text x="18" y="26" fill="#1d2521" font-size="18" font-weight="700">7</text>
+                                <text x="33" y="58" fill="#c23636" font-size="26">♦</text>
+                            </g>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            <div class="page-index">01 / 08</div>
+        </section>
+
+        <section class="page">
+            <div class="section-header">
+                <div>
+                    <div class="section-number">02. 프로젝트 개요</div>
+                    <h2>이 블랙잭 엔진이 해결하는 문제</h2>
+                </div>
+            </div>
+            <div class="two-col">
+                <div class="panel">
+                    <p>
+                        많은 블랙잭 프로젝트는 단순한 콘솔 플레이에 머무르거나, 규칙 로직이 UI 이벤트 코드에 직접 섞여 있어
+                        확장성과 설명 가능성이 떨어진다. 이 프로젝트는 이러한 한계를 해결하기 위해
+                        게임 엔진, 통계 분석, 전략 추천, JavaFX 프레젠테이션을 명확한 계층으로 분리했다.
+                    </p>
+                    <p>
+                        그 결과물은 단순히 플레이 가능한 데스크톱 게임이 아니라,
+                        <span class="accent">무엇을 추천하는지</span>,
+                        <span class="accent">왜 그 결정을 추천하는지</span>,
+                        <span class="accent">현재 상태가 얼마나 위험한지</span>
+                        를 실시간으로 설명할 수 있는 알고리즘 시스템이다.
+                        동시에 엔진 자체는 테스트, 시뮬레이션, 다른 UI 플랫폼으로도 재사용 가능하다.
+                    </p>
+                    <h3>전략 분석과 EV 계산이 중요한 이유</h3>
+                    <ul class="list-tight">
+                        <li><strong>Best Move</strong>는 현재 손패와 Dealer Up-card 기준의 최적 행동을 즉시 제시한다.</li>
+                        <li><strong>Expected EV</strong>는 장기 기대 성능을 정규화된 점수로 보여 준다.</li>
+                        <li><strong>Bust Risk</strong>는 추가로 한 장을 받을 때 즉시 bust 될 가능성을 수치화한다.</li>
+                        <li><strong>Dealer Bust Chance</strong>는 dealer visible card 의 약점을 정량적으로 보여 준다.</li>
+                        <li><strong>Recommendation Analytics</strong>는 추천을 따랐을 때와 무시했을 때의 성과 차이를 세션 기준으로 측정한다.</li>
+                    </ul>
+                </div>
+                <div class="section">
+                    <div class="metrics">
+                        <div class="stat">
+                            <div class="stat-label">Game Actions</div>
+                            <div class="stat-value">Hit<br>Stand<br>Double<br>Split</div>
+                            <div class="stat-note">단일 split 지원과 multi-hand 정산 흐름을 포함한다.</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-label">Engine Shape</div>
+                            <div class="stat-value">OOP<br>Stateful<br>UI-agnostic</div>
+                            <div class="stat-note">도메인 객체가 렌더링 코드와 분리되어 있다.</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-label">Analytics</div>
+                            <div class="stat-value">Session<br>Round<br>Advice</div>
+                            <div class="stat-note">결과 품질과 추천 추종 성과를 동시에 기록한다.</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-label">Persistence</div>
+                            <div class="stat-value">Save<br>Load<br>Export</div>
+                            <div class="stat-note">bankroll, theme, aggregate metrics 를 snapshot 으로 복원한다.</div>
+                        </div>
+                    </div>
+                    <div class="callout">
+                        <strong>핵심 기술 강점.</strong>
+                        이 프로젝트는 포트폴리오 앱이 자주 놓치는 지점을 공략한다.
+                        설명 가능한 전략 로직, 명시적인 payout 정산, split 상태 관리,
+                        라이브 UI 동기화, 세션 영속화, 재사용 가능한 애니메이션 헬퍼가 그 핵심이다.
+                    </div>
+                    <div class="panel">
+                        <h3 style="margin-top: 0;">현재 구현 기준의 공학적 전제</h3>
+                        <ul class="list-tight">
+                            <li>매 라운드 시작 시 52-card deck 을 새로 생성하고 shuffle 한다.</li>
+                            <li>dealer draw rule 이 <span class="mono">value &lt; 17</span> 이므로 soft 17 포함 모든 17에서 stand 한다.</li>
+                            <li>natural blackjack 은 opening deal 직후 즉시 판정한다.</li>
+                            <li>현재 natural blackjack payout 은 3:2 가 아니라 <span class="mono">2 × bet</span> 기반 even-money 정산이다.</li>
+                            <li>현재 구현은 라운드당 1회 split 만 허용하며, 이는 multi-hand UI 흐름을 단순화한다.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="page-index">02 / 08</div>
+        </section>
+
+        <section class="page">
+            <div class="section-header">
+                <div>
+                    <div class="section-number">03. 핵심 객체지향 아키텍처</div>
+                    <h2>클래스 책임과 계층 구조</h2>
+                </div>
+            </div>
+            <div class="panel svg-card">
+                <svg viewBox="0 0 1200 560" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <marker id="arrowKo" markerWidth="12" markerHeight="12" refX="9" refY="6" orient="auto">
+                            <path d="M0,0 L12,6 L0,12 z" fill="#e8c56e"/>
+                        </marker>
+                    </defs>
+                    <rect x="18" y="18" width="1164" height="524" rx="28" fill="rgba(7,17,12,0.35)" stroke="rgba(232,197,110,0.20)"/>
+                    <text x="80" y="62" fill="#f7edc8" font-size="22" font-weight="800">Presentation Layer</text>
+                    <text x="80" y="206" fill="#f7edc8" font-size="22" font-weight="800">Application / Engine Layer</text>
+                    <text x="80" y="406" fill="#f7edc8" font-size="22" font-weight="800">Domain Model Layer</text>
+                    <g fill="rgba(18,42,31,0.94)" stroke="rgba(232,197,110,0.25)">
+                        <rect x="80" y="84" width="210" height="84" rx="16"/>
+                        <rect x="320" y="84" width="240" height="84" rx="16"/>
+                        <rect x="590" y="84" width="220" height="84" rx="16"/>
+                        <rect x="80" y="228" width="230" height="98" rx="16"/>
+                        <rect x="342" y="228" width="230" height="98" rx="16"/>
+                        <rect x="604" y="228" width="230" height="98" rx="16"/>
+                        <rect x="866" y="228" width="230" height="98" rx="16"/>
+                        <rect x="80" y="430" width="120" height="82" rx="16"/>
+                        <rect x="220" y="430" width="120" height="82" rx="16"/>
+                        <rect x="360" y="430" width="120" height="82" rx="16"/>
+                        <rect x="500" y="430" width="120" height="82" rx="16"/>
+                        <rect x="640" y="430" width="120" height="82" rx="16"/>
+                        <rect x="780" y="430" width="120" height="82" rx="16"/>
+                        <rect x="920" y="430" width="220" height="82" rx="16"/>
+                    </g>
+                    <g fill="#ffffff" font-size="16" font-weight="700">
+                        <text x="102" y="116">BlackjackApplication</text>
+                        <text x="102" y="140" fill="#c9d7cd" font-size="13" font-weight="500">scene shell, theme, navigation</text>
+                        <text x="342" y="116">BlackjackController</text>
+                        <text x="342" y="140" fill="#c9d7cd" font-size="13" font-weight="500">FXML binding, animation, UI sync</text>
+                        <text x="614" y="116">CardImageMapper</text>
+                        <text x="614" y="140" fill="#c9d7cd" font-size="13" font-weight="500">PNG mapping, cache, safe fallback</text>
+                        <text x="102" y="262">GameEngine</text>
+                        <text x="102" y="286" fill="#c9d7cd" font-size="13" font-weight="500">round state, branching, payout, dealer logic</text>
+                        <text x="364" y="262">StrategyAdvisor</text>
+                        <text x="364" y="286" fill="#c9d7cd" font-size="13" font-weight="500">basic strategy, EV, risk, bust heuristics</text>
+                        <text x="626" y="262">RecommendationAnalytics</text>
+                        <text x="626" y="286" fill="#c9d7cd" font-size="13" font-weight="500">follow vs ignore metrics, accuracy</text>
+                        <text x="888" y="262">GameStatistics + SessionPersistence</text>
+                        <text x="888" y="286" fill="#c9d7cd" font-size="13" font-weight="500">session metrics, JSON snapshot save/load</text>
+                        <text x="118" y="462">Card</text>
+                        <text x="242" y="462">Deck</text>
+                        <text x="384" y="462">Hand</text>
+                        <text x="520" y="462">Player</text>
+                        <text x="660" y="462">Dealer</text>
+                        <text x="796" y="462">PlayerHand</text>
+                        <text x="938" y="462">RoundResult / HandResult</text>
+                    </g>
+                    <g stroke="#e8c56e" stroke-width="3" fill="none" marker-end="url(#arrowKo)">
+                        <path d="M440 168 C440 195, 195 196, 195 228"/>
+                        <path d="M440 168 C440 195, 457 196, 457 228"/>
+                        <path d="M440 168 C440 195, 720 196, 720 228"/>
+                        <path d="M440 168 C440 195, 980 196, 980 228"/>
+                        <path d="M195 326 C195 380, 430 390, 430 430"/>
+                        <path d="M195 326 C195 390, 290 390, 290 430"/>
+                        <path d="M195 326 C195 390, 150 390, 150 430"/>
+                        <path d="M195 326 C195 390, 570 390, 570 430"/>
+                        <path d="M195 326 C195 390, 710 390, 710 430"/>
+                        <path d="M195 326 C195 390, 850 390, 850 430"/>
+                        <path d="M195 326 C195 390, 1030 390, 1030 430"/>
+                    </g>
+                </svg>
+            </div>
+            <div class="table-card">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Class</th>
+                            <th>주요 책임</th>
+                            <th>설계 포인트</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="mono">Card</span></td>
+                            <td>immutable suit/rank 객체와 nominal blackjack value 를 제공한다.</td>
+                            <td>Ace 의 1/11 전환은 <span class="mono">Hand</span> 에서 처리하므로 symbolic identity 와 scoring logic 이 분리된다.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="mono">Deck</span></td>
+                            <td>표준 52-card deck 생성, shuffle, draw index 관리.</td>
+                            <td>현재는 round-scoped reset/shuffle 전략을 사용하며 reusable shoe 구조는 아직 도입하지 않았다.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="mono">Hand</span></td>
+                            <td>카드 목록, best value, soft 여부, blackjack, bust, split 가능 여부 계산.</td>
+                            <td>ace downgrade loop 가 scoring correctness 의 핵심이다.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="mono">Player</span></td>
+                            <td>bankroll 보유, bet commit, payout 반영.</td>
+                            <td>chip mutation 을 중앙화하여 UI 중복 정산을 방지한다.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="mono">Dealer</span></td>
+                            <td>dealer hand 와 draw policy 보유.</td>
+                            <td>정책 자체는 매우 단순하며 <span class="mono">value &lt; 17</span> 조건에 집중한다.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="mono">GameEngine</span></td>
+                            <td>bet, initial deal, action branching, dealer turn, settlement, statistics 전체 오케스트레이션.</td>
+                            <td>게임 규칙의 authoritative boundary 이며 UI 는 이 상태를 읽고 시각화만 수행한다.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="mono">RecommendationAnalytics</span></td>
+                            <td>추천 추종 여부와 결과 성과를 hand 단위로 추적한다.</td>
+                            <td>결정 객체를 임시 저장했다가 최종 <span class="mono">HandResult</span> 와 연결한다.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="mono">StrategyAdvisor</span></td>
+                            <td>best move, reason, confidence, EV, bust risk, dealer bust chance 생성.</td>
+                            <td>Monte Carlo 대신 explainable rule-based heuristic 을 사용한다.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="mono">RoundResult</span></td>
+                            <td>라운드 outcome, chip delta, total bet, total payout, per-hand detail 을 캡슐화한다.</td>
+                            <td>UI overlay, statistics, analytics 로 전달되는 표준 결과 객체다.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="mono">SessionStatistics</span></td>
+                            <td>실제 구현은 <span class="mono">GameStatistics</span> 와 snapshot DTO 들로 구성된다.</td>
+                            <td>wins, losses, pushes, blackjacks, split/double usage, streak, session P/L 을 관리한다.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="page-index">03 / 08</div>
+        </section>
+
+        <section class="page">
+            <div class="section-header">
+                <div>
+                    <div class="section-number">04. 게임 라운드 알고리즘 흐름</div>
+                    <h2>라운드 생명주기와 분기 구조</h2>
+                </div>
+            </div>
+            <div class="two-col">
+                <div class="panel svg-card">
+                    <svg viewBox="0 0 720 980" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <marker id="flowArrowKo" markerWidth="12" markerHeight="12" refX="9" refY="6" orient="auto">
+                                <path d="M0,0 L12,6 L0,12 z" fill="#e8c56e"/>
+                            </marker>
+                        </defs>
+                        <rect x="250" y="20" width="220" height="60" rx="18" fill="#163a2a" stroke="#e8c56e"/>
+                        <text x="360" y="56" text-anchor="middle" fill="#fff5d0" font-size="22" font-weight="700">세션 시작</text>
+                        <rect x="240" y="126" width="240" height="66" rx="18" fill="#173c2c" stroke="#d8e8da"/>
+                        <text x="360" y="158" text-anchor="middle" fill="#ffffff" font-size="18" font-weight="700">베팅 입력 및 검증</text>
+                        <text x="360" y="179" text-anchor="middle" fill="#c9d7cd" font-size="14">0 &lt; bet ≤ chips 조건 충족 필요</text>
+                        <rect x="218" y="238" width="284" height="76" rx="18" fill="#173f2d" stroke="#d8e8da"/>
+                        <text x="360" y="273" text-anchor="middle" fill="#ffffff" font-size="18" font-weight="700">GameEngine.startRound(bet)</text>
+                        <text x="360" y="296" text-anchor="middle" fill="#c9d7cd" font-size="14">bet commit → fresh deck → shuffle → opening deal</text>
+                        <rect x="175" y="360" width="370" height="90" rx="18" fill="#173f2d" stroke="#d8e8da"/>
+                        <text x="360" y="394" text-anchor="middle" fill="#fff5d0" font-size="18" font-weight="700">Initial Deal Animation Sequence</text>
+                        <text x="360" y="421" text-anchor="middle" fill="#c9d7cd" font-size="14">1. dealer visible card  2. player card  3. dealer hidden back card  4. player card</text>
+                        <polygon points="360,500 470,565 360,630 250,565" fill="#1b4733" stroke="#e8c56e"/>
+                        <text x="360" y="560" text-anchor="middle" fill="#fff8dc" font-size="18" font-weight="700">Natural Blackjack 판정?</text>
+                        <text x="360" y="584" text-anchor="middle" fill="#d3dfd6" font-size="13">opening deal 직후 player / dealer 검사</text>
+                        <rect x="75" y="682" width="250" height="82" rx="18" fill="#173f2d" stroke="#d8e8da"/>
+                        <text x="200" y="714" text-anchor="middle" fill="#fff5d0" font-size="18" font-weight="700">즉시 정산</text>
+                        <text x="200" y="739" text-anchor="middle" fill="#c9d7cd" font-size="13">push / player blackjack / dealer blackjack</text>
+                        <rect x="398" y="678" width="250" height="88" rx="18" fill="#173f2d" stroke="#d8e8da"/>
+                        <text x="523" y="712" text-anchor="middle" fill="#fff5d0" font-size="18" font-weight="700">플레이어 턴 루프</text>
+                        <text x="523" y="736" text-anchor="middle" fill="#c9d7cd" font-size="13">hit / stand / double / split / active hand switch</text>
+                        <rect x="398" y="818" width="250" height="72" rx="18" fill="#173f2d" stroke="#d8e8da"/>
+                        <text x="523" y="850" text-anchor="middle" fill="#fff5d0" font-size="18" font-weight="700">dealer turn</text>
+                        <text x="523" y="872" text-anchor="middle" fill="#c9d7cd" font-size="13">score ≥ 17 까지 자동 draw</text>
+                        <rect x="75" y="818" width="250" height="72" rx="18" fill="#173f2d" stroke="#d8e8da"/>
+                        <text x="200" y="850" text-anchor="middle" fill="#fff5d0" font-size="18" font-weight="700">라운드 정산</text>
+                        <text x="200" y="872" text-anchor="middle" fill="#c9d7cd" font-size="13">HandResult + RoundResult 생성</text>
+                        <rect x="218" y="922" width="284" height="40" rx="14" fill="#163a2a" stroke="#e8c56e"/>
+                        <text x="360" y="948" text-anchor="middle" fill="#fff5d0" font-size="16" font-weight="700">statistics + recommendation analytics + overlay update</text>
+                        <g stroke="#e8c56e" stroke-width="3" fill="none" marker-end="url(#flowArrowKo)">
+                            <path d="M360 80 L360 126"/>
+                            <path d="M360 192 L360 238"/>
+                            <path d="M360 314 L360 360"/>
+                            <path d="M360 450 L360 500"/>
+                            <path d="M250 565 L200 565 L200 682"/>
+                            <path d="M470 565 L523 565 L523 678"/>
+                            <path d="M523 766 L523 818"/>
+                            <path d="M523 890 L523 904 L200 904 L200 818"/>
+                            <path d="M200 890 L200 922"/>
+                        </g>
+                        <text x="214" y="553" fill="#fff5d0" font-size="13" font-weight="700">Yes</text>
+                        <text x="487" y="553" fill="#fff5d0" font-size="13" font-weight="700">No</text>
+                    </svg>
+                </div>
+                <div class="section">
+                    <div class="panel">
+                        <h3 style="margin-top: 0;">라운드 단계별 처리 순서</h3>
+                        <ol class="list-tight">
+                            <li><strong>bankroll / bet 검증.</strong> 플레이어는 opening stake 를 commit 할 수 있어야 한다.</li>
+                            <li><strong>fresh deck 준비.</strong> 엔진은 새 <span class="mono">Deck</span> 을 생성한 뒤 shuffle 한다.</li>
+                            <li><strong>opening hand 생성.</strong> 하나의 <span class="mono">PlayerHand</span> 를 만들고 player 2장, dealer 2장을 deal 한다.</li>
+                            <li><strong>natural blackjack 검사.</strong> 일반 턴으로 들어가기 전에 즉시 결과를 정산한다.</li>
+                            <li><strong>플레이어 행동 루프.</strong> active hand 는 hit, stand, double down, split 중 가능한 행동만 선택할 수 있다.</li>
+                            <li><strong>multi-hand 순차 진행.</strong> split 된 손패는 순차적으로 처리되며 active hand index 가 다음 미완료 손패로 이동한다.</li>
+                            <li><strong>dealer turn.</strong> 살아남은 player hand 가 하나라도 있으면 dealer 가 규칙에 따라 draw 한다.</li>
+                            <li><strong>settlement.</strong> 각 손패는 <span class="mono">HandResult</span> 로, 라운드 전체는 <span class="mono">RoundResult</span> 로 정리된다.</li>
+                            <li><strong>세션 반영.</strong> statistics, recommendation analytics, overlay, chip balance, labels 가 모두 결과 객체 기준으로 갱신된다.</li>
+                        </ol>
+                    </div>
+                    <div class="callout">
+                        <strong>엔진-우선 상태 갱신.</strong>
+                        규칙 상태는 항상 엔진이 먼저 확정하고, UI 는 이미 확정된 상태를 기준으로 애니메이션을 수행한다.
+                        이 접근은 시각 효과가 게임 규칙을 오염시키지 않도록 보장한다.
+                    </div>
+                    <div class="formula">
+                        <h4 style="margin-top: 0;">정산 계약(Payout Contract)</h4>
+                        <pre>B = hand 별 committed bet
+P = bankroll 로 반환되는 payout
+Δchips = P - B
+
+Normal win:        P = 2B,  Δchips = +B
+Push:              P = B,   Δchips = 0
+Loss / bust:       P = 0,   Δchips = -B
+Natural blackjack: 현재 구현도 P = 2B 를 사용</pre>
+                    </div>
+                </div>
+            </div>
+            <div class="page-index">04 / 08</div>
+        </section>
+
+        <section class="page">
+            <div class="section-header">
+                <div>
+                    <div class="section-number">05. 전략 추천 알고리즘</div>
+                    <h2>의사결정 엔진과 분석 지표 생성 과정</h2>
+                </div>
+            </div>
+            <div class="two-col equal">
+                <div class="panel svg-card">
+                    <svg viewBox="0 0 720 520" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <marker id="logicArrowKo" markerWidth="12" markerHeight="12" refX="9" refY="6" orient="auto">
+                                <path d="M0,0 L12,6 L0,12 z" fill="#e8c56e"/>
+                            </marker>
+                        </defs>
+                        <rect x="230" y="20" width="260" height="54" rx="16" fill="#163a2a" stroke="#e8c56e"/>
+                        <text x="360" y="53" text-anchor="middle" fill="#fff5d0" font-size="20" font-weight="700">Active PlayerHand + Dealer Up-card</text>
+                        <polygon points="360,108 470,168 360,228 250,168" fill="#1b4733" stroke="#e8c56e"/>
+                        <text x="360" y="166" text-anchor="middle" fill="#fff6d9" font-size="18" font-weight="700">split 가능 + pair 인가?</text>
+                        <rect x="50" y="278" width="180" height="72" rx="16" fill="#173f2d" stroke="#d8e8da"/>
+                        <text x="140" y="308" text-anchor="middle" fill="#fff5d0" font-size="16" font-weight="700">Pair Split Rules</text>
+                        <text x="140" y="332" text-anchor="middle" fill="#c9d7cd" font-size="13">A/A, 8/8, 9/9, 7/7 ...</text>
+                        <polygon points="360,278 470,338 360,398 250,338" fill="#1b4733" stroke="#e8c56e"/>
+                        <text x="360" y="336" text-anchor="middle" fill="#fff6d9" font-size="18" font-weight="700">soft hand 인가?</text>
+                        <rect x="490" y="278" width="180" height="72" rx="16" fill="#173f2d" stroke="#d8e8da"/>
+                        <text x="580" y="308" text-anchor="middle" fill="#fff5d0" font-size="16" font-weight="700">Hard Rules</text>
+                        <text x="580" y="332" text-anchor="middle" fill="#c9d7cd" font-size="13">17+ stand, 11 double ...</text>
+                        <rect x="270" y="432" width="180" height="70" rx="16" fill="#173f2d" stroke="#d8e8da"/>
+                        <text x="360" y="462" text-anchor="middle" fill="#fff5d0" font-size="16" font-weight="700">Soft Rules</text>
+                        <text x="360" y="486" text-anchor="middle" fill="#c9d7cd" font-size="13">soft 18, 19, 17 패턴</text>
+                        <g stroke="#e8c56e" stroke-width="3" fill="none" marker-end="url(#logicArrowKo)">
+                            <path d="M360 74 L360 108"/>
+                            <path d="M250 168 L140 168 L140 278"/>
+                            <path d="M470 168 L580 168 L580 278"/>
+                            <path d="M360 228 L360 278"/>
+                            <path d="M360 398 L360 432"/>
+                        </g>
+                        <text x="118" y="154" fill="#fff5d0" font-size="13" font-weight="700">Yes</text>
+                        <text x="597" y="154" fill="#fff5d0" font-size="13" font-weight="700">No</text>
+                    </svg>
+                </div>
+                <div class="panel">
+                    <h3 style="margin-top: 0;">추천 생성 파이프라인</h3>
+                    <ol class="list-tight">
+                        <li>현재 active hand 와 dealer visible up-card 를 읽는다.</li>
+                        <li>dealer card 를 전략용 값으로 변환한다. face card 는 10, Ace 는 11 로 본다.</li>
+                        <li>split 이 가능하고 pair 면, soft / hard total 로 들어가기 전에 split rule 을 우선 평가한다.</li>
+                        <li>split 이 아니면 <span class="mono">soft total</span> 또는 <span class="mono">hard total</span> 규칙표로 분기한다.</li>
+                        <li>행동과 이유 문자열을 생성한다.</li>
+                        <li>confidence, win tendency, risk level, EV, bust risk, dealer bust chance 를 추가 계산한다.</li>
+                    </ol>
+                    <div class="callout" style="margin-top: 12px;">
+                        <strong>왜 split 규칙을 먼저 평가하는가.</strong>
+                        pair split 은 단순한 total 비교가 아니라 게임 트리를 두 개의 독립 베팅 분기로 재구성하는 행위다.
+                        따라서 soft / hard total 보다 먼저 판단되어야 한다.
+                    </div>
+                </div>
+            </div>
+            <div class="three-col" style="margin-top: 16px;">
+                <div class="table-card">
+                    <table>
+                        <thead><tr><th colspan="2">Pair Split Rules</th></tr></thead>
+                        <tbody>
+                            <tr><td>A,A / 8,8</td><td>항상 split</td></tr>
+                            <tr><td>9,9</td><td>dealer 2-6, 8, 9 에서 split</td></tr>
+                            <tr><td>7,7</td><td>dealer 2-7 에서 split</td></tr>
+                            <tr><td>6,6</td><td>dealer 2-6 에서 split</td></tr>
+                            <tr><td>4,4</td><td>dealer 5-6 에서 split</td></tr>
+                            <tr><td>2,2 / 3,3</td><td>dealer 2-7 에서 split</td></tr>
+                            <tr><td>5,5 / 10-value pair</td><td>split 하지 않음</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="table-card">
+                    <table>
+                        <thead><tr><th colspan="2">Soft Total Rules</th></tr></thead>
+                        <tbody>
+                            <tr><td>Soft 20</td><td>Stand</td></tr>
+                            <tr><td>Soft 19</td><td>6 상대로 Double, 아니면 Stand</td></tr>
+                            <tr><td>Soft 18</td><td>3-6 Double, 2/7/8 Stand, 9/10/A Hit</td></tr>
+                            <tr><td>Soft 17</td><td>3-6 Double/Hit, 그 외 Hit</td></tr>
+                            <tr><td>Soft 15-16</td><td>4-6 Double/Hit, 그 외 Hit</td></tr>
+                            <tr><td>Soft 13-14</td><td>5-6 Double/Hit, 그 외 Hit</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="table-card">
+                    <table>
+                        <thead><tr><th colspan="2">Hard Total Rules</th></tr></thead>
+                        <tbody>
+                            <tr><td>17+</td><td>Stand</td></tr>
+                            <tr><td>13-16</td><td>dealer 2-6 에서 Stand, 아니면 Hit</td></tr>
+                            <tr><td>12</td><td>dealer 4-6 에서 Stand, 아니면 Hit</td></tr>
+                            <tr><td>11</td><td>non-ace 상대로 Double, 아니면 Hit</td></tr>
+                            <tr><td>10</td><td>dealer 2-9 에서 Double, 아니면 Hit</td></tr>
+                            <tr><td>9</td><td>dealer 3-6 에서 Double, 아니면 Hit</td></tr>
+                            <tr><td>8 이하</td><td>Hit</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="grid-note" style="margin-top: 16px;">
+                <div class="mini-card">
+                    <div class="title">Confidence 산정</div>
+                    <p>
+                        Aces / Eights split, hard 11 double, hard 11 이하의 명확한 hit 와 같이 canonical basic strategy 패턴은
+                        높은 confidence 를 가진다. 경계 조건은 주로 medium confidence 로 처리된다.
+                    </p>
+                </div>
+                <div class="mini-card">
+                    <div class="title">Risk / Win Tendency</div>
+                    <p>
+                        double down 과 split 은 stake exposure 가 커지므로 risk 가 상승한다.
+                        win tendency 는 hand softness, total strength, dealer weakness 를 조합해 favorable, balanced, dealer-favored 로 분류한다.
+                    </p>
+                </div>
+            </div>
+            <div class="page-index">05 / 08</div>
+        </section>
+
+        <section class="page">
+            <div class="section-header">
+                <div>
+                    <div class="section-number">06. 기대값(EV) 및 버스트 확률 수식</div>
+                    <h2>수학적 로직과 정규화 지표 정의</h2>
+                </div>
+            </div>
+            <div class="two-col equal">
+                <div class="section">
+                    <div class="formula">
+                        <h4 style="margin-top: 0;">Ace-Aware Hand Value</h4>
+                        <pre>total = Σ nominalCardValue
+aces = count(Ace)
+
+while total &gt; 21 and aces &gt; 0:
+    total = total - 10
+    aces = aces - 1
+
+bestValue = total
+softHand = 적어도 하나의 Ace 가 11로 유지되는 상태</pre>
+                    </div>
+                    <div class="formula">
+                        <h4 style="margin-top: 0;">Bust Risk</h4>
+                        <pre>BustRisk(hand) =
+    Σ [ w(r) × I( bust(hand + r) ) ] / Σ w(r)
+
+where:
+    w(2..9) = 4
+    w(10/J/Q/K bucket) = 16
+    w(A) = 4</pre>
+                        <p class="small" style="margin-top: 10px;">
+                            현재 구현은 남은 deck 전체를 exact enumeration 하지 않고,
+                            rank-weight 기반의 단일 draw simulation 으로 즉시 위험도를 계산한다.
+                        </p>
+                    </div>
+                    <div class="formula">
+                        <h4 style="margin-top: 0;">Dealer Bust Chance</h4>
+                        <pre>DealerBustChance(upCard) = lookup(upCard)
+
+2 → 0.35   3 → 0.37   4 → 0.40   5 → 0.42   6 → 0.42
+7 → 0.26   8 → 0.24   9 → 0.23   10 → 0.21   A → 0.17</pre>
+                    </div>
+                </div>
+                <div class="section">
+                    <div class="formula">
+                        <h4 style="margin-top: 0;">Expected Value Heuristic</h4>
+                        <pre>EV =
+    softBias
+  + dealerWeaknessBias
+  + totalStrengthBias
+  + actionBonus
+  - actionBustPenalty
+  + 0.42 × DealerBustChance
+
+Clamp(EV, -0.65, +0.65)</pre>
+                        <p class="small" style="margin-top: 10px;">
+                            이 값은 확률론적으로 완전한 exact EV 가 아니라,
+                            설명 가능성과 실시간 UI 응답성을 우선한 normalized engineering heuristic 이다.
+                        </p>
+                    </div>
+                    <div class="formula">
+                        <h4 style="margin-top: 0;">Win Rate, Session Profit, Recommendation Accuracy</h4>
+                        <pre>ResolvedHands = wins + losses + pushes
+WinRate = wins / ResolvedHands
+
+SessionProfit = Σ roundChipDelta
+
+FollowRate = totalRecommendationsFollowed / totalRecommendationsShown
+
+RecommendationAccuracy =
+    (followedWins + followedPushes) / resolvedFollowedCount</pre>
+                    </div>
+                    <div class="formula">
+                        <h4 style="margin-top: 0;">Payout And Bankroll Integrity</h4>
+                        <pre>On round start:
+    player.commitBet(B)
+
+On split / double:
+    player.commitBet(additionalStake)
+
+At settlement:
+    player.receivePayout(totalPayoutAmount)
+
+ChipDelta = totalPayoutAmount - totalCommittedBet</pre>
+                        <p class="small" style="margin-top: 10px;">
+                            bankroll 정산은 <span class="mono">finishRound(...)</span> 에서 한 번만 수행되므로
+                            UI 중복 반영이나 race-like chip 오염을 방지한다.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="table-card" style="margin-top: 16px;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>지표</th>
+                            <th>의미</th>
+                            <th>공학적 트레이드오프</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Expected EV</td>
+                            <td>추천 행동의 장기 기대 성능을 방향성 있게 나타내는 정규화 점수.</td>
+                            <td>실시간 UI 에 충분히 빠르지만 exact combinatorial EV 는 아니다.</td>
+                        </tr>
+                        <tr>
+                            <td>Bust Risk</td>
+                            <td>다음 한 장을 받을 때 즉시 bust 될 확률.</td>
+                            <td>remaining deck exact composition 대신 weighted rank model 을 사용한다.</td>
+                        </tr>
+                        <tr>
+                            <td>Dealer Bust Chance</td>
+                            <td>dealer up-card 기준 약세를 빠르게 표현하는 lookup probability.</td>
+                            <td>constant-time 이며 설명성이 높다.</td>
+                        </tr>
+                        <tr>
+                            <td>Confidence</td>
+                            <td>해당 추천이 얼마나 canonical basic strategy 패턴에 가까운지 나타냄.</td>
+                            <td>통계적 confidence interval 이 아니라 사람이 읽기 쉬운 categorical 신뢰도다.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="page-index">06 / 08</div>
+        </section>
+
+        <section class="page">
+            <div class="section-header">
+                <div>
+                    <div class="section-number">07. UI 상태 동기화</div>
+                    <h2>JavaFX 프레젠테이션을 엔진 상태와 정합시키는 방식</h2>
+                </div>
+            </div>
+            <div class="two-col">
+                <div class="panel svg-card">
+                    <svg viewBox="0 0 760 720" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <marker id="seqArrowKo" markerWidth="12" markerHeight="12" refX="9" refY="6" orient="auto">
+                                <path d="M0,0 L12,6 L0,12 z" fill="#e8c56e"/>
+                            </marker>
+                        </defs>
+                        <text x="90" y="40" fill="#fff4cd" font-size="18" font-weight="800">User</text>
+                        <text x="260" y="40" fill="#fff4cd" font-size="18" font-weight="800">BlackjackController</text>
+                        <text x="515" y="40" fill="#fff4cd" font-size="18" font-weight="800">GameEngine / StrategyAdvisor</text>
+                        <line x1="100" y1="60" x2="100" y2="680" stroke="rgba(255,255,255,0.18)" stroke-dasharray="6 6"/>
+                        <line x1="300" y1="60" x2="300" y2="680" stroke="rgba(255,255,255,0.18)" stroke-dasharray="6 6"/>
+                        <line x1="560" y1="60" x2="560" y2="680" stroke="rgba(255,255,255,0.18)" stroke-dasharray="6 6"/>
+                        <rect x="40" y="88" width="120" height="42" rx="12" fill="#173b2b" stroke="#d8e8da"/>
+                        <text x="100" y="114" text-anchor="middle" fill="#fff5d0" font-size="14" font-weight="700">Deal Cards</text>
+                        <rect x="224" y="164" width="150" height="58" rx="14" fill="#173f2d" stroke="#d8e8da"/>
+                        <text x="299" y="191" text-anchor="middle" fill="#fff5d0" font-size="15" font-weight="700">playInitialDealSequence()</text>
+                        <text x="299" y="211" text-anchor="middle" fill="#c9d7cd" font-size="12">control lock + animation</text>
+                        <rect x="472" y="264" width="176" height="66" rx="14" fill="#173f2d" stroke="#d8e8da"/>
+                        <text x="560" y="291" text-anchor="middle" fill="#fff5d0" font-size="15" font-weight="700">startRound(bet)</text>
+                        <text x="560" y="313" text-anchor="middle" fill="#c9d7cd" font-size="12">authoritative state 생성</text>
+                        <rect x="224" y="374" width="150" height="58" rx="14" fill="#173f2d" stroke="#d8e8da"/>
+                        <text x="299" y="401" text-anchor="middle" fill="#fff5d0" font-size="15" font-weight="700">updateUi()</text>
+                        <text x="299" y="421" text-anchor="middle" fill="#c9d7cd" font-size="12">header + cards + footer</text>
+                        <rect x="472" y="480" width="176" height="66" rx="14" fill="#173f2d" stroke="#d8e8da"/>
+                        <text x="560" y="507" text-anchor="middle" fill="#fff5d0" font-size="15" font-weight="700">recommend(...)</text>
+                        <text x="560" y="529" text-anchor="middle" fill="#c9d7cd" font-size="12">best move + metrics</text>
+                        <rect x="224" y="590" width="150" height="66" rx="14" fill="#173f2d" stroke="#d8e8da"/>
+                        <text x="299" y="617" text-anchor="middle" fill="#fff5d0" font-size="15" font-weight="700">refresh labels</text>
+                        <text x="299" y="639" text-anchor="middle" fill="#c9d7cd" font-size="12">score, chips, stats, overlay</text>
+                        <g stroke="#e8c56e" stroke-width="3" fill="none" marker-end="url(#seqArrowKo)">
+                            <path d="M100 108 L300 108"/>
+                            <path d="M300 196 L560 196"/>
+                            <path d="M560 300 L300 300"/>
+                            <path d="M300 404 L560 404"/>
+                            <path d="M560 513 L300 513"/>
+                            <path d="M300 623 L100 623"/>
+                        </g>
+                    </svg>
+                </div>
+                <div class="section">
+                    <div class="panel">
+                        <h3 style="margin-top: 0;">동기화 전략</h3>
+                        <ul class="list-tight">
+                            <li><strong>engine-first state.</strong> 규칙 상태는 엔진이 먼저 결정하고 UI 는 그 결과를 시각화한다.</li>
+                            <li><strong>단일 갱신 허브.</strong> <span class="mono">updateUi()</span> 가 header, card area, recommendation panel, footer, control state, outcome effect 를 통합 갱신한다.</li>
+                            <li><strong>animation gating.</strong> <span class="mono">animationInProgress</span>, <span class="mono">initialDealAnimationInProgress</span> 플래그로 중간 상태 입력을 차단한다.</li>
+                            <li><strong>split-hand awareness.</strong> active hand index 를 기준으로 highlight, score, recommendation context 가 함께 이동한다.</li>
+                            <li><strong>resolved-state handoff.</strong> 라운드 종료 후 recommendation panel 은 live advice 대신 안전한 “Round complete” 상태로 전환된다.</li>
+                        </ul>
+                    </div>
+                    <div class="table-card">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>UI 대상</th>
+                                    <th>갱신 시점</th>
+                                    <th>Source Of Truth</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>card dealing animation</td>
+                                    <td>opening deal, hit, dealer draw, dealer reveal</td>
+                                    <td>엔진 손패 상태를 읽는 controller animation helper</td>
+                                </tr>
+                                <tr>
+                                    <td>chip balance</td>
+                                    <td>bet commit, clear bet, settlement, reset, session load</td>
+                                    <td><span class="mono">Player.chips</span> 와 displayed animation state</td>
+                                </tr>
+                                <tr>
+                                    <td>hand score label</td>
+                                    <td>initial deal finish, hit completion, dealer reveal/draw</td>
+                                    <td><span class="mono">Hand.getBestValue()</span></td>
+                                </tr>
+                                <tr>
+                                    <td>recommendation panel</td>
+                                    <td>initial deal, every hit, split, hand switch, double, dealer reveal, round resolve, session load</td>
+                                    <td><span class="mono">StrategyAdvisor.recommend(...)</span></td>
+                                </tr>
+                                <tr>
+                                    <td>session save/load</td>
+                                    <td>utility button click</td>
+                                    <td>snapshot DTO + manual JSON serializer/parser</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="page-index">07 / 08</div>
+        </section>
+
+        <section class="page">
+            <div class="section-header">
+                <div>
+                    <div class="section-number">08. 성능 최적화</div>
+                    <h2>계산 비용, 렌더링 비용, 확장 비용 관점의 개선 여지</h2>
+                </div>
+            </div>
+            <div class="three-col">
+                <div class="mini-card">
+                    <div class="title">현재 성능 특성</div>
+                    <ul class="list-tight">
+                        <li>round 마다 fresh deck + shuffle 을 사용해 상태 추론이 단순하다.</li>
+                        <li>PNG card image 는 첫 로드 이후 memory cache 를 활용한다.</li>
+                        <li>dealer bust chance 는 constant-time lookup 이다.</li>
+                        <li>bust risk 는 full permutation 대신 rank-weight model 로 계산된다.</li>
+                    </ul>
+                </div>
+                <div class="mini-card">
+                    <div class="title">최적화 기회</div>
+                    <ul class="list-tight">
+                        <li><span class="mono">(hand signature, dealer up-card, action)</span> 기준 EV / risk memoization.</li>
+                        <li>per-round deck rebuild 대신 multi-deck shoe 도입.</li>
+                        <li>re-split 도입 시 split recursion cache 추가.</li>
+                        <li>복수 손패 UI 에서 node refresh batching 개선.</li>
+                    </ul>
+                </div>
+                <div class="mini-card">
+                    <div class="title">JavaFX 렌더링 최적화</div>
+                    <ul class="list-tight">
+                        <li>dedicated animation layer 로 transient node 가 전체 layout 을 흔들지 않도록 분리.</li>
+                        <li>고정 card size 유지로 relayout cost 최소화.</li>
+                        <li>runtime SVG 대신 cached raster PNG 사용으로 decode 비용 제거.</li>
+                        <li>felt/background 와 dynamic overlay 를 별도 layer 로 유지.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="section-header" style="margin-top: 18px;">
+                <div>
+                    <div class="section-number">09. 향후 확장 로드맵</div>
+                    <h3 style="margin: 0; color: var(--accent-soft);">전략적 확장 시나리오</h3>
+                </div>
+            </div>
+            <div class="table-card" style="margin-top: 8px;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>로드맵 항목</th>
+                            <th>기술적 가치</th>
+                            <th>확장 방향</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Monte Carlo simulation mode</td>
+                            <td>보다 정확한 확률 표면과 고급 EV 계산 제공.</td>
+                            <td>기존 recommendation interface 뒤에 simulation worker 계층 추가.</td>
+                        </tr>
+                        <tr>
+                            <td>reinforcement learning strategy</td>
+                            <td>basic strategy 와 학습 정책을 비교 분석할 수 있다.</td>
+                            <td>pluggable policy engine 구조와 offline training data pipeline 도입.</td>
+                        </tr>
+                        <tr>
+                            <td>multiplayer support</td>
+                            <td>single player 엔진을 seat-based table state 로 일반화.</td>
+                            <td><span class="mono">PlayerHand</span> ownership 과 turn sequencing 을 확장.</td>
+                        </tr>
+                        <tr>
+                            <td>online leaderboard</td>
+                            <td>제품성, ranking, 장기 세션 분석 기능 강화.</td>
+                            <td>snapshot 을 backend service 또는 local database 로 저장.</td>
+                        </tr>
+                        <tr>
+                            <td>probability heatmap</td>
+                            <td>recommendation confidence 와 EV 를 시각적으로 탐색 가능.</td>
+                            <td>strategy output 을 matrix / overlay 로 렌더링.</td>
+                        </tr>
+                        <tr>
+                            <td>mobile version</td>
+                            <td>엔진 재사용성과 cross-platform 설계 완성도 검증.</td>
+                            <td>engine / analytics 계층은 유지하고 mobile UI shell 만 교체.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="section-header" style="margin-top: 18px;">
+                <div>
+                    <div class="section-number">10. 최종 엔지니어링 요약</div>
+                    <h3 style="margin: 0; color: var(--accent-soft);">면접과 포트폴리오에서 강하게 전달되는 이유</h3>
+                </div>
+            </div>
+            <div class="panel" style="margin-top: 8px;">
+                <p>
+                    이 프로젝트는 단순한 카드 게임 구현을 넘어, 상태 기계, 규칙 엔진, 추천 로직,
+                    통계 분석, 영속화, 애니메이션 UI 를 한 시스템으로 통합했다는 점에서
+                    완성도 높은 소프트웨어 엔지니어링 사례로 읽힌다.
+                </p>
+                <p>
+                    특히 중요한 점은 카드가 보인다는 사실이 아니라,
+                    시스템이 <strong>의사결정을 설명하고</strong>,
+                    <strong>사용자 선택의 결과를 측정하며</strong>,
+                    <strong>애니메이션과 규칙 상태를 분리하고</strong>,
+                    <strong>의미 있는 세션 상태를 저장/복원</strong>
+                    할 수 있다는 데 있다. 이 특성은 GitHub 포트폴리오, 시스템 설계 인터뷰,
+                    UI/엔진 분리 설계 설명 모두에 강한 설득력을 제공한다.
+                </p>
+                <div class="kpi-grid" style="margin-top: 14px;">
+                    <div class="stat">
+                        <div class="stat-label">Architecture</div>
+                        <div class="stat-value">Reusable Engine</div>
+                        <div class="stat-note">규칙과 JavaFX 렌더링이 명확히 분리되어 있다.</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Analysis</div>
+                        <div class="stat-value">Explainable Strategy</div>
+                        <div class="stat-note">모든 추천은 이유와 수치 지표를 함께 제공한다.</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Presentation</div>
+                        <div class="stat-value">Premium Desktop UX</div>
+                        <div class="stat-note">카지노 감성의 시각 디자인과 애니메이션, overlay, session utility 를 포함한다.</div>
+                    </div>
+                </div>
+                <p class="footer-note">
+                    구현 정합성 메모: 본 문서는 현재 코드 기준을 그대로 반영하며,
+                    even-money blackjack payout, 라운드당 단일 split, heuristic EV / risk 모델을 전제로 한다.
+                </p>
+            </div>
+            <div class="page-index">08 / 08</div>
+        </section>
+    </div>
+</body>
+</html>
