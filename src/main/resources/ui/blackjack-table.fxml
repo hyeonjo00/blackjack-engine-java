@@ -1,0 +1,608 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Spinner?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane fx:controller="com.blackjackengine.ui.BlackjackController"
+           prefHeight="860.0"
+           prefWidth="1180.0"
+           styleClass="table-root"
+           xmlns="http://javafx.com/javafx/17"
+           xmlns:fx="http://javafx.com/fxml/1">
+    <children>
+        <Region maxHeight="1.7976931348623157E308"
+                maxWidth="1.7976931348623157E308"
+                mouseTransparent="true"
+                styleClass="table-background-layer" />
+        <Region maxHeight="1.7976931348623157E308"
+                maxWidth="1.7976931348623157E308"
+                mouseTransparent="true"
+                styleClass="table-spotlight-layer" />
+        <Region maxHeight="1.7976931348623157E308"
+                maxWidth="1.7976931348623157E308"
+                mouseTransparent="true"
+                styleClass="table-background-vignette" />
+        <BorderPane maxWidth="1440.0" prefHeight="860.0" prefWidth="1180.0" styleClass="table-overlay">
+            <top>
+                <HBox fx:id="topInfoBar"
+                      alignment="CENTER_LEFT"
+                      spacing="18.0"
+                      styleClass="top-info-bar"
+                      BorderPane.alignment="CENTER">
+                    <padding>
+                        <Insets bottom="10.0" left="28.0" right="28.0" top="24.0" />
+                    </padding>
+                    <children>
+                        <VBox minWidth="230.0" spacing="4.0" styleClass="top-title-block">
+                            <children>
+                                <Label styleClass="table-title" text="Blackjack Engine" />
+                                <Label styleClass="top-subtitle" text="Premium Table Flow" />
+                            </children>
+                        </VBox>
+                        <Region HBox.hgrow="ALWAYS" />
+                        <HBox alignment="CENTER_RIGHT" spacing="12.0" styleClass="top-status-strip">
+                            <children>
+                                <VBox spacing="6.0" styleClass="panel,top-metric-card">
+                                    <padding>
+                                        <Insets bottom="12.0" left="16.0" right="16.0" top="12.0" />
+                                    </padding>
+                                    <children>
+                                        <Label styleClass="top-metric-label" text="Chips" />
+                                        <Label fx:id="chipBalanceLabel"
+                                               styleClass="top-metric-value balance-value"
+                                               text="100" />
+                                    </children>
+                                </VBox>
+                                <VBox spacing="6.0" styleClass="panel,top-metric-card">
+                                    <padding>
+                                        <Insets bottom="12.0" left="16.0" right="16.0" top="12.0" />
+                                    </padding>
+                                    <children>
+                                        <Label styleClass="top-metric-label" text="Current Bet" />
+                                        <Label fx:id="currentBetLabel"
+                                               styleClass="top-metric-value bet-metric-value"
+                                               text="0" />
+                                    </children>
+                                </VBox>
+                                <VBox spacing="6.0" styleClass="panel,top-metric-card">
+                                    <padding>
+                                        <Insets bottom="12.0" left="16.0" right="16.0" top="12.0" />
+                                    </padding>
+                                    <children>
+                                        <Label styleClass="top-metric-label" text="Hands On Table" />
+                                        <Label fx:id="handsOnTableLabel"
+                                               styleClass="top-metric-value"
+                                               text="0" />
+                                    </children>
+                                </VBox>
+                                <VBox spacing="6.0" styleClass="panel,top-metric-card">
+                                    <padding>
+                                        <Insets bottom="12.0" left="16.0" right="16.0" top="12.0" />
+                                    </padding>
+                                    <children>
+                                        <Label styleClass="top-metric-label" text="Session P/L" />
+                                        <Label fx:id="sessionProfitLossLabel"
+                                               styleClass="top-metric-value session-profit-value"
+                                               text="0" />
+                                    </children>
+                                </VBox>
+                                <VBox maxWidth="240.0"
+                                      minWidth="240.0"
+                                      spacing="6.0"
+                                      styleClass="panel,top-result-card">
+                                    <padding>
+                                        <Insets bottom="12.0" left="16.0" right="16.0" top="12.0" />
+                                    </padding>
+                                    <children>
+                                        <Label styleClass="top-metric-label" text="Last Round Result" />
+                                        <Label fx:id="roundStatusLabel"
+                                               styleClass="status-text luxury-status-text round-result-value"
+                                               text="Waiting to deal"
+                                               wrapText="true" />
+                                    </children>
+                                </VBox>
+                            </children>
+                        </HBox>
+                    </children>
+                </HBox>
+            </top>
+            <center>
+                <AnchorPane BorderPane.alignment="CENTER">
+                    <children>
+                        <VBox alignment="TOP_CENTER"
+                              fillWidth="false"
+                              spacing="0.0"
+                              AnchorPane.bottomAnchor="18.0"
+                              AnchorPane.leftAnchor="24.0"
+                              AnchorPane.rightAnchor="24.0"
+                              AnchorPane.topAnchor="18.0">
+                            <children>
+                                <VBox fx:id="dealerZoneBox"
+                                      alignment="TOP_CENTER"
+                                      maxWidth="760.0"
+                                      spacing="10.0"
+                                      styleClass="table-zone,dealer-zone">
+                                    <children>
+                                        <Label styleClass="table-zone-title,dealer-zone-title" text="Dealer" />
+                                        <Label fx:id="dealerScoreLabel" styleClass="score-label,dealer-score-label" text="Score: --" />
+                                        <HBox fx:id="dealerCardsContainer"
+                                              alignment="CENTER"
+                                              minHeight="156.0"
+                                              spacing="14.0"
+                                              styleClass="cards-row,dealer-cards-row,dealer-cards-stage" />
+                                    </children>
+                                </VBox>
+                                <Region VBox.vgrow="ALWAYS" />
+                                <StackPane fx:id="betSpotPane"
+                                           maxHeight="154.0"
+                                           maxWidth="154.0"
+                                           minHeight="154.0"
+                                           minWidth="154.0"
+                                           prefHeight="154.0"
+                                           prefWidth="154.0"
+                                           styleClass="bet-spot">
+                                    <children>
+                                        <Pane fx:id="betChipStackPane"
+                                              maxHeight="154.0"
+                                              maxWidth="154.0"
+                                              minHeight="154.0"
+                                              minWidth="154.0"
+                                              mouseTransparent="true"
+                                              pickOnBounds="false"
+                                              styleClass="bet-chip-stack-layer" />
+                                        <VBox alignment="TOP_CENTER" mouseTransparent="true" spacing="4.0">
+                                            <padding>
+                                                <Insets top="14.0" />
+                                            </padding>
+                                            <children>
+                                                <Label styleClass="bet-spot-label" text="Bet Spot" />
+                                                <Label fx:id="tableBetLabel" styleClass="bet-spot-value bet-total-value" text="0" />
+                                            </children>
+                                        </VBox>
+                                    </children>
+                                </StackPane>
+                                <Region VBox.vgrow="ALWAYS" />
+                                <VBox fx:id="playerZoneBox"
+                                      alignment="BOTTOM_CENTER"
+                                      maxWidth="860.0"
+                                      spacing="10.0"
+                                      styleClass="table-zone,player-zone">
+                                    <children>
+                                        <Label styleClass="table-zone-title,player-zone-title" text="Player" />
+                                        <Label fx:id="playerScoreLabel" styleClass="score-label,player-score-label" text="Active score: --" />
+                                        <HBox fx:id="playerHandsContainer"
+                                              alignment="CENTER"
+                                              minHeight="228.0"
+                                              spacing="18.0"
+                                              styleClass="cards-row,player-cards-row,player-cards-stage" />
+                                    </children>
+                                </VBox>
+                                <StackPane fx:id="activeRoundActionBar"
+                                           maxWidth="620.0"
+                                           prefWidth="620.0"
+                                           styleClass="panel,control-panel,active-round-action-bar">
+                                    <padding>
+                                        <Insets bottom="14.0" left="18.0" right="18.0" top="14.0" />
+                                    </padding>
+                                    <children>
+                                        <HBox alignment="CENTER" spacing="12.0" styleClass="action-button-group">
+                                            <children>
+                                                <Button fx:id="hitButton"
+                                                        mnemonicParsing="false"
+                                                        onAction="#handleHit"
+                                                        prefWidth="126.0"
+                                                        styleClass="action-button"
+                                                        text="Hit" />
+                                                <Button fx:id="standButton"
+                                                        mnemonicParsing="false"
+                                                        onAction="#handleStand"
+                                                        prefWidth="126.0"
+                                                        styleClass="action-button"
+                                                        text="Stand" />
+                                                <Button fx:id="doubleButton"
+                                                        mnemonicParsing="false"
+                                                        onAction="#handleDouble"
+                                                        prefWidth="126.0"
+                                                        styleClass="action-button"
+                                                        text="Double" />
+                                                <Button fx:id="splitButton"
+                                                        mnemonicParsing="false"
+                                                        onAction="#handleSplit"
+                                                        prefWidth="126.0"
+                                                        styleClass="action-button"
+                                                        text="Split" />
+                                            </children>
+                                        </HBox>
+                                    </children>
+                                </StackPane>
+                            </children>
+                        </VBox>
+                        <VBox maxWidth="340.0"
+                              minWidth="340.0"
+                              prefWidth="340.0"
+                              fillWidth="true"
+                              spacing="12.0"
+                              styleClass="panel,recommendation-panel,floating-panel"
+                              AnchorPane.rightAnchor="28.0"
+                              AnchorPane.topAnchor="130.0">
+                            <padding>
+                                <Insets bottom="18.0" left="18.0" right="18.0" top="18.0" />
+                            </padding>
+                            <children>
+                                <Label styleClass="section-title" text="Strategy Analysis" />
+                                <VBox fillWidth="true"
+                                      maxWidth="1.7976931348623157E308"
+                                      spacing="10.0"
+                                      styleClass="recommendation-detail-list">
+                                    <children>
+                                        <VBox fillWidth="true"
+                                              maxWidth="1.7976931348623157E308"
+                                              spacing="4.0"
+                                              styleClass="recommendation-detail-row">
+                                            <children>
+                                                <Label maxWidth="1.7976931348623157E308"
+                                                       styleClass="recommendation-detail-label"
+                                                       text="Best Move"
+                                                       textOverrun="WORD_ELLIPSIS"
+                                                       wrapText="true" />
+                                                <Label fx:id="bestMoveLabel"
+                                                        maxWidth="1.7976931348623157E308"
+                                                        styleClass="recommendation-action premium-recommendation-action recommendation-detail-value strategy-value-label"
+                                                        style="-fx-text-fill: white; -fx-opacity: 1.0;"
+                                                        text="Waiting"
+                                                        textOverrun="WORD_ELLIPSIS"
+                                                        wrapText="true" />
+                                            </children>
+                                        </VBox>
+                                        <VBox fillWidth="true"
+                                              maxWidth="1.7976931348623157E308"
+                                              spacing="4.0"
+                                              styleClass="recommendation-detail-row">
+                                            <children>
+                                                <Label maxWidth="1.7976931348623157E308"
+                                                       styleClass="recommendation-detail-label"
+                                                       text="Reason"
+                                                       textOverrun="WORD_ELLIPSIS"
+                                                       wrapText="true" />
+                                                <Label fx:id="reasonLabel"
+                                                        maxWidth="1.7976931348623157E308"
+                                                        styleClass="recommendation-reason premium-recommendation-reason recommendation-detail-value strategy-value-label"
+                                                        style="-fx-text-fill: white; -fx-opacity: 1.0;"
+                                                        text="Choose a bet and press Deal Cards to start the next hand."
+                                                        textOverrun="WORD_ELLIPSIS"
+                                                        wrapText="true" />
+                                            </children>
+                                        </VBox>
+                                        <VBox fillWidth="true"
+                                              maxWidth="1.7976931348623157E308"
+                                              spacing="4.0"
+                                              styleClass="recommendation-detail-row">
+                                            <children>
+                                                <Label maxWidth="1.7976931348623157E308"
+                                                       styleClass="recommendation-detail-label"
+                                                       text="Confidence"
+                                                       textOverrun="WORD_ELLIPSIS"
+                                                       wrapText="true" />
+                                                <Label fx:id="confidenceLabel"
+                                                        maxWidth="1.7976931348623157E308"
+                                                        styleClass="recommendation-detail-value recommendation-metric-value strategy-value-label"
+                                                        style="-fx-text-fill: white; -fx-opacity: 1.0;"
+                                                        text="--"
+                                                        textOverrun="WORD_ELLIPSIS"
+                                                        wrapText="true" />
+                                            </children>
+                                        </VBox>
+                                        <VBox fillWidth="true"
+                                              maxWidth="1.7976931348623157E308"
+                                              spacing="4.0"
+                                              styleClass="recommendation-detail-row">
+                                            <children>
+                                                <Label maxWidth="1.7976931348623157E308"
+                                                       styleClass="recommendation-detail-label"
+                                                       text="Expected EV"
+                                                       textOverrun="WORD_ELLIPSIS"
+                                                       wrapText="true" />
+                                                <Label fx:id="expectedEvLabel"
+                                                         maxWidth="1.7976931348623157E308"
+                                                         styleClass="recommendation-detail-value recommendation-metric-value strategy-value-label"
+                                                         style="-fx-text-fill: white; -fx-opacity: 1.0;"
+                                                         text="--"
+                                                        textOverrun="WORD_ELLIPSIS"
+                                                        wrapText="true" />
+                                            </children>
+                                        </VBox>
+                                        <VBox fillWidth="true"
+                                              maxWidth="1.7976931348623157E308"
+                                              spacing="4.0"
+                                              styleClass="recommendation-detail-row">
+                                            <children>
+                                                <Label maxWidth="1.7976931348623157E308"
+                                                       styleClass="recommendation-detail-label"
+                                                       text="Bust Risk"
+                                                       textOverrun="WORD_ELLIPSIS"
+                                                       wrapText="true" />
+                                                <Label fx:id="bustRiskLabel"
+                                                       maxWidth="1.7976931348623157E308"
+                                                       styleClass="recommendation-detail-value recommendation-metric-value strategy-value-label"
+                                                       style="-fx-text-fill: white; -fx-opacity: 1.0;"
+                                                       text="--"
+                                                       textOverrun="WORD_ELLIPSIS"
+                                                       wrapText="true" />
+                                            </children>
+                                        </VBox>
+                                        <VBox fillWidth="true"
+                                              maxWidth="1.7976931348623157E308"
+                                              spacing="4.0"
+                                              styleClass="recommendation-detail-row">
+                                            <children>
+                                                <Label maxWidth="1.7976931348623157E308"
+                                                       styleClass="recommendation-detail-label"
+                                                       text="Dealer Bust Chance"
+                                                       textOverrun="WORD_ELLIPSIS"
+                                                       wrapText="true" />
+                                                <Label fx:id="dealerBustChanceLabel"
+                                                       maxWidth="1.7976931348623157E308"
+                                                       styleClass="recommendation-detail-value recommendation-metric-value strategy-value-label"
+                                                       style="-fx-text-fill: white; -fx-opacity: 1.0;"
+                                                       text="--"
+                                                       textOverrun="WORD_ELLIPSIS"
+                                                       wrapText="true" />
+                                            </children>
+                                        </VBox>
+                                    </children>
+                                </VBox>
+                            </children>
+                        </VBox>
+                        <VBox fx:id="chipControlsContainer"
+                              maxWidth="332.0"
+                              spacing="12.0"
+                              styleClass="panel,chip-rack,quick-controls-shell"
+                              AnchorPane.bottomAnchor="26.0"
+                              AnchorPane.leftAnchor="28.0">
+                            <padding>
+                                <Insets bottom="16.0" left="16.0" right="16.0" top="16.0" />
+                            </padding>
+                            <children>
+                                <Label styleClass="chip-rack-label" text="Quick Chips" />
+                                <HBox alignment="CENTER_LEFT" spacing="12.0">
+                                    <children>
+                                        <Button fx:id="chip1Button"
+                                                mnemonicParsing="false"
+                                                onAction="#onBetChip"
+                                                prefHeight="68.0"
+                                                prefWidth="68.0"
+                                                styleClass="chip-button,chip-value-1"
+                                                text="1"
+                                                userData="1" />
+                                        <Button fx:id="chip5Button"
+                                                mnemonicParsing="false"
+                                                onAction="#onBetChip"
+                                                prefHeight="68.0"
+                                                prefWidth="68.0"
+                                                styleClass="chip-button,chip-value-5"
+                                                text="5"
+                                                userData="5" />
+                                        <Button fx:id="chip10Button"
+                                                mnemonicParsing="false"
+                                                onAction="#onBetChip"
+                                                prefHeight="68.0"
+                                                prefWidth="68.0"
+                                                styleClass="chip-button,chip-value-10"
+                                                text="10"
+                                                userData="10" />
+                                        <Button fx:id="chip25Button"
+                                                mnemonicParsing="false"
+                                                onAction="#onBetChip"
+                                                prefHeight="68.0"
+                                                prefWidth="68.0"
+                                                styleClass="chip-button,chip-value-25"
+                                                text="25"
+                                                userData="25" />
+                                    </children>
+                                </HBox>
+                                <HBox alignment="CENTER_LEFT" spacing="10.0" styleClass="bet-selector-row">
+                                    <children>
+                                        <Label styleClass="bet-selector-label" text="Bet Selector" />
+                                        <Spinner fx:id="betSpinner"
+                                                 editable="true"
+                                                 prefWidth="136.0"
+                                                 styleClass="bet-spinner" />
+                                    </children>
+                                </HBox>
+                                <Button fx:id="quickDealButton"
+                                        maxWidth="1.7976931348623157E308"
+                                        mnemonicParsing="false"
+                                        onAction="#onNextRound"
+                                        prefHeight="46.0"
+                                        styleClass="action-button next-round-button chip-panel-deal-button"
+                                        text="Deal Cards" />
+                                <HBox alignment="CENTER_LEFT" spacing="10.0" styleClass="quick-secondary-row">
+                                    <children>
+                                        <Button fx:id="clearBetButton"
+                                                maxWidth="1.7976931348623157E308"
+                                                mnemonicParsing="false"
+                                                onAction="#onClearBet"
+                                                prefHeight="40.0"
+                                                styleClass="action-button clear-bet-button aux-action-button"
+                                                text="Clear Bet"
+                                                HBox.hgrow="ALWAYS" />
+                                        <Button fx:id="resetSessionButton"
+                                                maxWidth="1.7976931348623157E308"
+                                                mnemonicParsing="false"
+                                                onAction="#onResetSession"
+                                                prefHeight="40.0"
+                                                styleClass="action-button reset-session-button aux-action-button"
+                                                text="Reset Session"
+                                                HBox.hgrow="ALWAYS" />
+                                    </children>
+                                </HBox>
+                                <HBox alignment="CENTER_LEFT" spacing="10.0" styleClass="quick-secondary-row">
+                                    <children>
+                                        <Button fx:id="saveSessionButton"
+                                                maxWidth="1.7976931348623157E308"
+                                                mnemonicParsing="false"
+                                                onAction="#onSaveSession"
+                                                prefHeight="40.0"
+                                                styleClass="action-button aux-action-button utility-button"
+                                                text="Save Session"
+                                                HBox.hgrow="ALWAYS" />
+                                        <Button fx:id="loadSessionButton"
+                                                maxWidth="1.7976931348623157E308"
+                                                mnemonicParsing="false"
+                                                onAction="#onLoadSession"
+                                                prefHeight="40.0"
+                                                styleClass="action-button aux-action-button utility-button"
+                                                text="Load Session"
+                                                HBox.hgrow="ALWAYS" />
+                                    </children>
+                                </HBox>
+                                <Button fx:id="exportStatsButton"
+                                        maxWidth="1.7976931348623157E308"
+                                        mnemonicParsing="false"
+                                        onAction="#onExportStatsJson"
+                                        prefHeight="40.0"
+                                        styleClass="action-button aux-action-button utility-button export-stats-button"
+                                        text="Export Stats JSON" />
+                                <Label fx:id="betErrorLabel"
+                                       managed="false"
+                                       styleClass="bet-error-label"
+                                       text=""
+                                       visible="false"
+                                       wrapText="true" />
+                            </children>
+                        </VBox>
+                    </children>
+                </AnchorPane>
+            </center>
+            <bottom>
+                <VBox spacing="14.0" BorderPane.alignment="CENTER">
+                    <padding>
+                        <Insets bottom="24.0" left="28.0" right="28.0" top="10.0" />
+                    </padding>
+                    <children>
+                        <HBox spacing="14.0" styleClass="footer-summary-row">
+                            <children>
+                                <VBox HBox.hgrow="ALWAYS" spacing="6.0" styleClass="panel,footer-panel,footer-summary-card">
+                                    <padding>
+                                        <Insets bottom="14.0" left="18.0" right="18.0" top="14.0" />
+                                    </padding>
+                                    <children>
+                                        <Label styleClass="metric-label" text="Wins" />
+                                        <Label fx:id="winsLabel" styleClass="metric-value" text="0" />
+                                    </children>
+                                </VBox>
+                                <VBox HBox.hgrow="ALWAYS" spacing="6.0" styleClass="panel,footer-panel,footer-summary-card">
+                                    <padding>
+                                        <Insets bottom="14.0" left="18.0" right="18.0" top="14.0" />
+                                    </padding>
+                                    <children>
+                                        <Label styleClass="metric-label" text="Losses" />
+                                        <Label fx:id="lossesLabel" styleClass="metric-value" text="0" />
+                                    </children>
+                                </VBox>
+                                <VBox HBox.hgrow="ALWAYS" spacing="6.0" styleClass="panel,footer-panel,footer-summary-card">
+                                    <padding>
+                                        <Insets bottom="14.0" left="18.0" right="18.0" top="14.0" />
+                                    </padding>
+                                    <children>
+                                        <Label styleClass="metric-label" text="Pushes" />
+                                        <Label fx:id="pushesLabel" styleClass="metric-value" text="0" />
+                                    </children>
+                                </VBox>
+                                <VBox HBox.hgrow="ALWAYS" spacing="6.0" styleClass="panel,footer-panel,footer-summary-card">
+                                    <padding>
+                                        <Insets bottom="14.0" left="18.0" right="18.0" top="14.0" />
+                                    </padding>
+                                    <children>
+                                        <Label styleClass="metric-label" text="Win Rate" />
+                                        <Label fx:id="winRateLabel" styleClass="metric-value" text="N/A" />
+                                    </children>
+                                </VBox>
+                                <VBox HBox.hgrow="ALWAYS" spacing="6.0" styleClass="panel,footer-panel,footer-summary-card">
+                                    <padding>
+                                        <Insets bottom="14.0" left="18.0" right="18.0" top="14.0" />
+                                    </padding>
+                                    <children>
+                                        <Label styleClass="metric-label" text="Recommendation Accuracy" />
+                                        <Label fx:id="recommendationAccuracyLabel" styleClass="metric-value" text="N/A" />
+                                    </children>
+                                </VBox>
+                                <VBox HBox.hgrow="ALWAYS" spacing="6.0" styleClass="panel,footer-panel,footer-summary-card">
+                                    <padding>
+                                        <Insets bottom="14.0" left="18.0" right="18.0" top="14.0" />
+                                    </padding>
+                                    <children>
+                                        <Label styleClass="metric-label" text="Best Win Streak" />
+                                        <Label fx:id="bestWinStreakLabel" styleClass="metric-value" text="0" />
+                                    </children>
+                                </VBox>
+                                <VBox HBox.hgrow="ALWAYS" spacing="6.0" styleClass="panel,footer-panel,footer-summary-card">
+                                    <padding>
+                                        <Insets bottom="14.0" left="18.0" right="18.0" top="14.0" />
+                                    </padding>
+                                    <children>
+                                        <Label styleClass="metric-label" text="Session Profit" />
+                                        <Label fx:id="sessionProfitLabel" styleClass="metric-value" text="0" />
+                                    </children>
+                                </VBox>
+                            </children>
+                        </HBox>
+                        <HBox alignment="CENTER_RIGHT">
+                            <children>
+                                <Button fx:id="quitButton"
+                                        mnemonicParsing="false"
+                                        onAction="#onQuit"
+                                        prefWidth="126.0"
+                                        styleClass="action-button quit-button"
+                                        text="Quit" />
+                            </children>
+                        </HBox>
+                    </children>
+                </VBox>
+            </bottom>
+        </BorderPane>
+        <StackPane fx:id="roundResultOverlay"
+                   managed="false"
+                   mouseTransparent="true"
+                   opacity="0.0"
+                   visible="false"
+                   styleClass="round-result-overlay">
+            <children>
+                <VBox alignment="CENTER"
+                      maxWidth="440.0"
+                      spacing="8.0"
+                      styleClass="panel,round-result-overlay-card">
+                    <padding>
+                        <Insets bottom="24.0" left="26.0" right="26.0" top="24.0" />
+                    </padding>
+                    <children>
+                        <Label fx:id="roundResultOverlayTitleLabel"
+                               styleClass="round-overlay-title"
+                               text="PLAYER WINS" />
+                        <Label fx:id="roundResultOverlayDeltaLabel"
+                               styleClass="round-overlay-delta"
+                               text="+25 chips" />
+                        <Label fx:id="roundResultOverlayMessageLabel"
+                               styleClass="round-overlay-message"
+                               text="Dealer busted. You win."
+                               wrapText="true" />
+                    </children>
+                </VBox>
+            </children>
+        </StackPane>
+        <Pane fx:id="tableAnimationLayer"
+              maxHeight="1.7976931348623157E308"
+              maxWidth="1.7976931348623157E308"
+              mouseTransparent="true"
+              pickOnBounds="false" />
+    </children>
+</StackPane>

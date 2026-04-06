@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane fx:controller="com.blackjackengine.ui.StartScreenController"
+           prefHeight="860.0"
+           prefWidth="1180.0"
+           styleClass="table-root,start-screen-root"
+           xmlns="http://javafx.com/javafx/17"
+           xmlns:fx="http://javafx.com/fxml/1">
+    <children>
+        <Region maxHeight="1.7976931348623157E308"
+                maxWidth="1.7976931348623157E308"
+                mouseTransparent="true"
+                styleClass="table-background-layer" />
+        <Region maxHeight="1.7976931348623157E308"
+                maxWidth="1.7976931348623157E308"
+                mouseTransparent="true"
+                styleClass="table-spotlight-layer,start-screen-spotlight" />
+        <Region maxHeight="1.7976931348623157E308"
+                maxWidth="1.7976931348623157E308"
+                mouseTransparent="true"
+                styleClass="table-background-vignette,start-screen-vignette" />
+
+        <StackPane fx:id="ambientCardPane"
+                   maxHeight="156.0"
+                   maxWidth="112.0"
+                   minHeight="156.0"
+                   minWidth="112.0"
+                   mouseTransparent="true"
+                   prefHeight="156.0"
+                   prefWidth="112.0"
+                   styleClass="card-node,start-ambient-card"
+                   translateX="305.0"
+                   translateY="-92.0">
+            <children>
+                <ImageView fx:id="ambientCardImage" fitHeight="156.0" fitWidth="112.0" preserveRatio="true" />
+            </children>
+        </StackPane>
+
+        <StackPane fx:id="ambientChipPane"
+                   maxHeight="92.0"
+                   maxWidth="92.0"
+                   minHeight="92.0"
+                   minWidth="92.0"
+                   mouseTransparent="true"
+                   prefHeight="92.0"
+                   prefWidth="92.0"
+                   styleClass="chip-token,chip-value-25,start-ambient-chip"
+                   translateX="-330.0"
+                   translateY="196.0">
+            <children>
+                <Region fx:id="ambientChipShine"
+                        maxHeight="58.0"
+                        maxWidth="58.0"
+                        minHeight="58.0"
+                        minWidth="58.0"
+                        mouseTransparent="true"
+                        prefHeight="58.0"
+                        prefWidth="58.0"
+                        styleClass="ambient-chip-shine" />
+                <Label styleClass="chip-token-text,start-chip-text" text="25" />
+            </children>
+        </StackPane>
+
+        <VBox alignment="CENTER" maxWidth="460.0" spacing="18.0" styleClass="panel,start-menu-shell">
+            <padding>
+                <Insets bottom="92.0" left="36.0" right="36.0" top="72.0" />
+            </padding>
+            <children>
+                <Label styleClass="start-title" text="BLACKJACK" />
+                <Label styleClass="start-subtitle" text="AI Strategy Edition" />
+                <Label styleClass="start-description"
+                       text="Step into the felt, tune the table atmosphere, and play a polished blackjack session with live AI strategy guidance."
+                       wrapText="true" />
+                <VBox maxWidth="320.0" spacing="8.0" styleClass="start-bankroll-panel">
+                    <children>
+                        <Label styleClass="start-input-label" text="Starting Chips" />
+                        <HBox alignment="CENTER_LEFT" spacing="10.0">
+                            <children>
+                                <TextField fx:id="startingChipsField"
+                                           onAction="#onStartGame"
+                                           prefHeight="48.0"
+                                           prefWidth="178.0"
+                                           styleClass="start-input-field"
+                                           text="100" />
+                                <Label styleClass="start-input-hint" text="Examples: 100, 500, 1000" />
+                            </children>
+                        </HBox>
+                        <Label fx:id="startErrorLabel"
+                               managed="false"
+                               styleClass="start-error-label"
+                               text=""
+                               visible="false"
+                               wrapText="true" />
+                    </children>
+                </VBox>
+                <VBox maxWidth="320.0" spacing="14.0">
+                    <children>
+                        <Button fx:id="startGameButton"
+                                maxWidth="1.7976931348623157E308"
+                                mnemonicParsing="false"
+                                onAction="#onStartGame"
+                                prefHeight="54.0"
+                                styleClass="menu-button,primary-menu-button"
+                                text="Start Game" />
+                        <Button fx:id="statisticsButton"
+                                maxWidth="1.7976931348623157E308"
+                                mnemonicParsing="false"
+                                onAction="#onStatistics"
+                                prefHeight="54.0"
+                                styleClass="menu-button,secondary-menu-button"
+                                text="Statistics" />
+                        <Button fx:id="themeButton"
+                                maxWidth="1.7976931348623157E308"
+                                mnemonicParsing="false"
+                                onAction="#onTheme"
+                                prefHeight="54.0"
+                                styleClass="menu-button,secondary-menu-button"
+                                text="Theme: Classic Green" />
+                        <Button fx:id="exitButton"
+                                maxWidth="1.7976931348623157E308"
+                                mnemonicParsing="false"
+                                onAction="#onExit"
+                                prefHeight="54.0"
+                                styleClass="menu-button,secondary-menu-button,exit-menu-button"
+                                text="Exit" />
+                    </children>
+                </VBox>
+            </children>
+        </VBox>
+    </children>
+</StackPane>
