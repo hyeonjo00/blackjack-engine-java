@@ -1,6 +1,6 @@
 # blackjack-engine-java
 
-[English](./README.md) | [Korean](./README.ko.md) | [Japanese](./README.ja.md)
+[English](./README.md) | [한국어](./README.ko.md) | [日本語](./README.ja.md)
 
 Java と JavaFX で構築した、ポートフォリオ向けの Blackjack Engine プロジェクトです。  
 ゲームルール、戦略分析、推薦分析、セッション永続化、デスクトップ UI を分離し、

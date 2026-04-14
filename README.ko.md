@@ -1,6 +1,6 @@
 # blackjack-engine-java
 
-[English](./README.md) | [Korean](./README.ko.md) | [Japanese](./README.ja.md)
+[English](./README.md) | [한국어](./README.ko.md) | [日本語](./README.ja.md)
 
 Java와 JavaFX로 만든 포트폴리오형 블랙잭 엔진 프로젝트입니다.  
 게임 규칙, 전략 분석, 추천 분석, 세션 영속화, 데스크톱 UI를 분리해서 구성해

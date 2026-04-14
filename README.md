@@ -1,6 +1,6 @@
 # blackjack-engine-java
 
-[English](./README.md) | [Korean](./README.ko.md) | [Japanese](./README.ja.md)
+[English](./README.md) | [한국어](./README.ko.md) | [日本語](./README.ja.md)
 
 A portfolio-grade Blackjack Engine project built with Java and JavaFX.
 It separates core game rules, strategy analysis, recommendation analytics, session persistence,
